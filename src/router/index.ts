@@ -31,5 +31,28 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
+  Router.beforeEach((to, from, next) => {
+    if (typeof window === 'undefined') {
+      next();
+      return;
+    }
+
+    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+
+    if (!requiresAuth) {
+      next();
+      return;
+    }
+
+    const token = window.localStorage.getItem('tk');
+
+    if (token) {
+      next();
+      return;
+    }
+
+    next('/');
+  });
+
   return Router;
 });

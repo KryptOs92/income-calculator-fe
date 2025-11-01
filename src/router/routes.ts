@@ -9,7 +9,13 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/wallets",
     component: () => import("layouts/MainLayout.vue"),
-    children: [{ path: "", component: () => import("pages/WalletsPage.vue") }],
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        component: () => import("pages/WalletsPage.vue"),
+      },
+    ],
   },
 
   // Always leave this as last one,
