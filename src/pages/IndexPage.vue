@@ -56,6 +56,9 @@
             class="server-node__alert"
           />
         </transition>
+        <div class="server-node__consumption">
+          {{ formatConsumption(serverConsumptions[server.id]) }} kW/h
+        </div>
       </div>
 
       <q-card class="network-hub column items-center justify-center q-pa-xl">
@@ -142,6 +145,7 @@ const buttonHighlighted = ref(false);
 const signals = ref<Signal[]>([]);
 const blocks = ref<Block[]>([]);
 const latestBlockId = ref<number | null>(null);
+const serverConsumptions = ref<Record<string, number>>({});
 
 let alertTimer: number | undefined;
 let blockIndex = 0;
@@ -164,6 +168,7 @@ const triggerAlert = () => {
 
   activeAlert.value = server.id;
   buttonHighlighted.value = true;
+  updateConsumption(server.id);
 
   const signalKey = Date.now() + Math.random();
 
@@ -184,6 +189,8 @@ const triggerAlert = () => {
 };
 
 const MAX_BLOCKS = 6;
+const MIN_CONSUMPTION = 45;
+const MAX_CONSUMPTION = 180;
 
 const generateHash = () => {
   const randomPart = Math.random().toString(16).slice(2, 8);
@@ -214,7 +221,45 @@ const addBlock = () => {
   }, 1200);
 };
 
+const generateConsumptionValue = () =>
+  parseFloat(
+    (MIN_CONSUMPTION + Math.random() * (MAX_CONSUMPTION - MIN_CONSUMPTION)).toFixed(1),
+  );
+
+const initializeConsumptions = () => {
+  const initial: Record<string, number> = {};
+
+  servers.value.forEach((server) => {
+    initial[server.id] = generateConsumptionValue();
+  });
+
+  serverConsumptions.value = initial;
+};
+
+const updateConsumption = (serverId: string) => {
+  const current = serverConsumptions.value[serverId] ?? generateConsumptionValue();
+  const delta = (Math.random() - 0.5) * 14;
+  const next = Math.min(
+    MAX_CONSUMPTION,
+    Math.max(MIN_CONSUMPTION, parseFloat((current + delta).toFixed(1))),
+  );
+
+  serverConsumptions.value = {
+    ...serverConsumptions.value,
+    [serverId]: next,
+  };
+};
+
+const formatConsumption = (value?: number) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '--';
+  }
+
+  return value.toFixed(1);
+};
+
 onMounted(() => {
+  initializeConsumptions();
   addBlock();
   triggerAlert();
   alertTimer = window.setInterval(triggerAlert, 6500);
@@ -313,6 +358,28 @@ onBeforeUnmount(() => {
   color: #ffb74d;
   font-size: 28px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.server-node__consumption {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(16, 26, 56, 0.8);
+  color: #d6e3ff;
+  box-shadow: 0 6px 15px rgba(5, 10, 24, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.network-stage--light .server-node__consumption {
+  background: rgba(255, 255, 255, 0.85);
+  color: #14213d;
+  box-shadow: 0 6px 12px rgba(23, 33, 60, 0.2);
 }
 
 .alert-pop-enter-active,
