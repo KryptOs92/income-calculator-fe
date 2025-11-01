@@ -75,7 +75,7 @@
       </div>
 
       <q-card class="network-hub column items-center justify-center q-pa-lg">
-        <transition-group name="block-chain" tag="div" class="block-chain q-mb-md">
+        <transition-group name="block-chain" tag="div" class="block-chain q-mb-lg">
           <div
             v-for="block in blocks"
             :key="block.id"
@@ -88,10 +88,10 @@
         </transition-group>
         <q-btn
           color="primary"
-          class="network-hub__button"
+          class="network-hub__button text-subtitle2 q-mt-md"
           :class="{ 'network-hub__button--alert': buttonHighlighted }"
           unelevated
-          size="lg"
+          size="md"
           :label="t('indexPage.cta')"
         />
       </q-card>
