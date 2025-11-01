@@ -18,8 +18,24 @@
           flat
           round
           :icon="themeIcon"
-          :aria-label="isDark ? 'Attiva tema chiaro' : 'Attiva tema scuro'"
+          :aria-label="toggleThemeAriaLabel"
           @click="toggleTheme"
+        />
+
+        <q-select
+          v-model="selectedLocale"
+          class="q-ml-sm"
+          dense
+          borderless
+          dark
+          options-dense
+          emit-value
+          map-options
+          dropdown-icon="translate"
+          :options="localeOptions"
+          style="width: 130px"
+          :aria-label="t('layout.nav.language')"
+          @update:model-value="onLocaleChange"
         />
       </q-toolbar>
     </q-header>
@@ -36,14 +52,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
+import type { MessageLanguages } from 'src/boot/i18n';
 
 const leftDrawerOpen = ref(false);
 const THEME_STORAGE_KEY = 'theme-preference';
+const LOCALE_STORAGE_KEY = 'locale-preference';
 const $q = useQuasar();
+const { locale, t } = useI18n();
 const isDark = computed(() => $q.dark.isActive);
 const themeIcon = computed(() => (isDark.value ? 'light_mode' : 'dark_mode'));
+const toggleThemeAriaLabel = computed(() =>
+  isDark.value ? t('layout.nav.lightMode') : t('layout.nav.darkMode'),
+);
+const localeOptions: Array<{ label: string; value: MessageLanguages }> = [
+  { label: 'Italiano', value: 'it-IT' },
+  { label: 'English', value: 'en-US' },
+];
+const selectedLocale = ref<MessageLanguages>(locale.value as MessageLanguages);
 
 function toggleLeftDrawer () {
   leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -57,6 +85,17 @@ const toggleTheme = () => {
   }
 };
 
+const onLocaleChange = (value: MessageLanguages) => {
+  locale.value = value;
+};
+
+watch(locale, (newLocale) => {
+  selectedLocale.value = newLocale as MessageLanguages;
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, newLocale);
+  }
+});
+
 onMounted(() => {
   if (typeof window === 'undefined') {
     return;
@@ -69,5 +108,7 @@ onMounted(() => {
   } else {
     window.localStorage.setItem(THEME_STORAGE_KEY, $q.dark.isActive ? 'dark' : 'light');
   }
+
+  selectedLocale.value = locale.value as MessageLanguages;
 });
 </script>

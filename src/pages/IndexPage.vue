@@ -92,7 +92,7 @@
           :class="{ 'network-hub__button--alert': buttonHighlighted }"
           unelevated
           size="lg"
-          label="Effettua login"
+          :label="t('indexPage.cta')"
         />
       </q-card>
     </div>
@@ -102,6 +102,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 
 type ServerNode = {
   id: string;
@@ -126,6 +127,7 @@ type Popup = {
 };
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const isDark = computed(() => $q.dark.isActive);
 
@@ -438,6 +440,10 @@ onBeforeUnmount(() => {
   box-shadow: 0 10px 26px rgba(38, 49, 87, 0.2);
 }
 
+.network-stage--dark .server-node {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
 .server-node--alert {
   transform: scale(1.18) translateY(-6px);
   box-shadow:
@@ -463,12 +469,20 @@ onBeforeUnmount(() => {
     0 0 18px rgba(16, 163, 102, 0.28);
 }
 
+.network-stage--dark .server-node--ack {
+  border: 1px solid rgba(144, 255, 206, 0.35);
+}
+
 .network-stage--light .server-node--alert {
   background: linear-gradient(160deg, rgba(255, 168, 38, 0.95), rgba(255, 217, 102, 0.88));
   color: #2d1b00;
   box-shadow:
     0 18px 38px rgba(255, 167, 38, 0.35),
     0 0 26px rgba(255, 195, 77, 0.45);
+}
+
+.network-stage--dark .server-node--alert {
+  border: 1px solid rgba(255, 206, 132, 0.6);
 }
 
 .server-node__alert {
