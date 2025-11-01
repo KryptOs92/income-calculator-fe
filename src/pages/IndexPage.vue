@@ -1,43 +1,468 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page class="index-page q-pa-none">
+    <div
+      :class="[
+        'network-stage',
+        isDark ? 'network-stage--dark' : 'network-stage--light'
+      ]"
+    >
+      <svg
+        class="network-stage__connections"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        <line
+          v-if="activeServer"
+          key="active-connection"
+          class="connection-line connection-line--progress"
+          :x1="activeServer.position.x"
+          :y1="activeServer.position.y"
+          x2="50"
+          y2="50"
+        />
+      </svg>
+
+      <div class="network-stage__signals">
+        <transition-group name="signal" tag="div">
+          <div
+            v-for="signal in signals"
+            :key="signal.key"
+            class="network-signal"
+            :style="{
+              '--start-x': signal.startX,
+              '--start-y': signal.startY,
+              '--end-x': signal.endX,
+              '--end-y': signal.endY
+            }"
+          />
+        </transition-group>
+      </div>
+
+      <div
+        v-for="server in servers"
+        :key="server.id"
+        class="server-node"
+        :class="{ 'server-node--alert': activeAlert === server.id }"
+        :style="{
+          top: `${server.position.y}%`,
+          left: `${server.position.x}%`
+        }"
+      >
+        <q-icon name="dns" size="40px" />
+        <transition name="alert-pop">
+          <q-icon
+            v-if="activeAlert === server.id"
+            name="priority_high"
+            class="server-node__alert"
+          />
+        </transition>
+      </div>
+
+      <q-card class="network-hub column items-center justify-center q-pa-xl">
+        <transition-group name="block-chain" tag="div" class="block-chain q-mb-lg">
+          <div
+            v-for="block in blocks"
+            :key="block.id"
+            class="block-chain__block"
+            :class="{ 'block-chain__block--new': block.id === latestBlockId }"
+          >
+            <div class="block-chain__hash">{{ block.hash }}</div>
+            <div class="block-chain__index">#{{ block.index }}</div>
+          </div>
+        </transition-group>
+        <q-btn
+          color="primary"
+          class="network-hub__button"
+          :class="{ 'network-hub__button--alert': buttonHighlighted }"
+          unelevated
+          size="lg"
+          label="Effettua login"
+        />
+      </q-card>
+    </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/ExampleComponent.vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useQuasar } from 'quasar';
 
-const todos = ref<Todo[]>([
-  {
-    id: 1,
-    content: 'ct1'
-  },
-  {
-    id: 2,
-    content: 'ct2'
-  },
-  {
-    id: 3,
-    content: 'ct3'
-  },
-  {
-    id: 4,
-    content: 'ct4'
-  },
-  {
-    id: 5,
-    content: 'ct5'
+type ServerNode = {
+  id: string;
+  position: {
+    x: number;
+    y: number;
+  };
+};
+
+type Signal = {
+  key: number;
+  startX: string;
+  startY: string;
+  endX: string;
+  endY: string;
+};
+
+type Block = {
+  id: number;
+  index: number;
+  hash: string;
+};
+
+const $q = useQuasar();
+
+const isDark = computed(() => $q.dark.isActive);
+
+const OCTAGON_NODE_COUNT = 8;
+const OCTAGON_RADIUS = 36;
+
+const servers = ref<ServerNode[]>(
+  Array.from({ length: OCTAGON_NODE_COUNT }, (_, index) => {
+    const angle = (Math.PI * 2 * index) / OCTAGON_NODE_COUNT - Math.PI / 2;
+
+    return {
+      id: `node-${index + 1}`,
+      position: {
+        x: Math.round(50 + OCTAGON_RADIUS * Math.cos(angle)),
+        y: Math.round(50 + OCTAGON_RADIUS * Math.sin(angle)),
+      },
+    };
+  }),
+);
+
+const activeAlert = ref<string | null>(null);
+const activeServer = computed<ServerNode | null>(() => {
+  if (!activeAlert.value) {
+    return null;
   }
-]);
 
-const meta = ref<Meta>({
-  totalCount: 1200
+  return servers.value.find((server) => server.id === activeAlert.value) ?? null;
+});
+const buttonHighlighted = ref(false);
+const signals = ref<Signal[]>([]);
+const blocks = ref<Block[]>([]);
+const latestBlockId = ref<number | null>(null);
+
+let alertTimer: number | undefined;
+let blockIndex = 0;
+
+const removeSignal = (key: number) => {
+  signals.value = signals.value.filter((signal) => signal.key !== key);
+};
+
+const triggerAlert = () => {
+  if (!servers.value.length) {
+    return;
+  }
+
+  const randomIndex = Math.floor(Math.random() * servers.value.length);
+  const server = servers.value[randomIndex];
+
+  if (!server) {
+    return;
+  }
+
+  activeAlert.value = server.id;
+  buttonHighlighted.value = true;
+
+  const signalKey = Date.now() + Math.random();
+
+  signals.value.push({
+    key: signalKey,
+    startX: `${server.position.x}%`,
+    startY: `${server.position.y}%`,
+    endX: '50%',
+    endY: '50%',
+  });
+
+  window.setTimeout(() => addBlock(), 900);
+  window.setTimeout(() => removeSignal(signalKey), 1700);
+  window.setTimeout(() => (buttonHighlighted.value = false), 1900);
+  window.setTimeout(() => {
+    activeAlert.value = null;
+  }, 2200);
+};
+
+const MAX_BLOCKS = 6;
+
+const generateHash = () => {
+  const randomPart = Math.random().toString(16).slice(2, 8);
+  const timestampPart = Date.now().toString(16).slice(-6);
+  return `${timestampPart}${randomPart}`.toUpperCase();
+};
+
+const addBlock = () => {
+  blockIndex += 1;
+  const blockId = blockIndex;
+
+  if (blocks.value.length >= MAX_BLOCKS) {
+    blocks.value.shift();
+  }
+
+  blocks.value.push({
+    id: blockId,
+    index: blockIndex,
+    hash: generateHash(),
+  });
+
+  latestBlockId.value = blockId;
+
+  window.setTimeout(() => {
+    if (latestBlockId.value === blockId) {
+      latestBlockId.value = null;
+    }
+  }, 1200);
+};
+
+onMounted(() => {
+  addBlock();
+  triggerAlert();
+  alertTimer = window.setInterval(triggerAlert, 6500);
+});
+
+onBeforeUnmount(() => {
+  if (alertTimer !== undefined) {
+    window.clearInterval(alertTimer);
+    alertTimer = undefined;
+  }
 });
 </script>
+
+<style scoped>
+.index-page {
+  display: flex;
+  align-items: stretch;
+}
+
+.network-stage {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.4s ease;
+}
+
+.network-stage--light {
+  background: radial-gradient(circle at 50% 20%, #f6f9ff, #dbe6ff, #bac8ff);
+}
+
+.network-stage--dark {
+  background: radial-gradient(circle at 50% 20%, #0b1026, #111a3d, #1b264f);
+}
+
+.network-stage__connections {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.connection-line {
+  stroke: #4d9fff;
+  stroke-width: 2.2;
+  opacity: 0.9;
+  stroke-dasharray: 6;
+  animation: line-dash 1.1s linear infinite;
+}
+
+.network-stage--light .connection-line {
+  stroke: #205cc6;
+}
+
+@keyframes line-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.server-node {
+  position: absolute;
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
+  border-radius: 24px;
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.4s ease;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  background: rgba(21, 31, 67, 0.45);
+  color: #e7ecff;
+}
+
+.network-stage--light .server-node {
+  background: rgba(255, 255, 255, 0.65);
+  color: #1b244a;
+  box-shadow: 0 10px 26px rgba(38, 49, 87, 0.2);
+}
+
+.server-node--alert {
+  transform: scale(1.08) translateY(-4px);
+  box-shadow: 0 14px 32px rgba(77, 159, 255, 0.4);
+}
+
+.server-node__alert {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  color: #ffb74d;
+  font-size: 28px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.alert-pop-enter-active,
+.alert-pop-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.alert-pop-enter-from,
+.alert-pop-leave-to {
+  transform: scale(0.2);
+  opacity: 0;
+}
+
+.network-hub {
+  position: relative;
+  z-index: 2;
+  border-radius: 28px;
+  min-width: 320px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 45px rgba(23, 33, 60, 0.25);
+}
+
+.network-stage--dark .network-hub {
+  background: rgba(10, 16, 35, 0.8);
+  color: #f1f5ff;
+  box-shadow: 0 18px 45px rgba(8, 13, 28, 0.55);
+}
+
+.network-hub__title {
+  letter-spacing: 0.5px;
+}
+
+.network-hub__button {
+  min-width: 200px;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.network-hub__button--alert {
+  box-shadow:
+    0 0 18px rgba(77, 159, 255, 0.75),
+    0 0 36px rgba(77, 159, 255, 0.55);
+  transform: translateY(-2px);
+}
+
+.block-chain {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  max-width: 400px;
+}
+
+.block-chain__block {
+  position: relative;
+  width: 72px;
+  min-height: 96px;
+  border-radius: 14px;
+  padding: 12px 10px;
+  background: rgba(14, 22, 48, 0.82);
+  color: #e5edff;
+  border: 1px solid rgba(90, 136, 255, 0.18);
+  box-shadow: 0 12px 30px rgba(6, 12, 28, 0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border 0.35s ease;
+}
+
+.network-stage--light .block-chain__block {
+  background: rgba(255, 255, 255, 0.9);
+  color: #172040;
+  border: 1px solid rgba(46, 76, 184, 0.2);
+  box-shadow: 0 12px 28px rgba(23, 33, 60, 0.25);
+}
+
+.block-chain__block--new {
+  transform: translateY(-8px);
+  border-color: rgba(125, 187, 255, 0.65);
+  box-shadow:
+    0 14px 40px rgba(77, 159, 255, 0.4),
+    0 0 24px rgba(77, 159, 255, 0.55);
+}
+
+.block-chain__hash {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 1px;
+  font-family: monospace;
+  word-break: break-word;
+  opacity: 0.8;
+}
+
+.block-chain__index {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.block-chain-enter-active,
+.block-chain-leave-active,
+.block-chain-move {
+  transition: all 0.4s ease;
+}
+
+.block-chain-enter-from,
+.block-chain-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.network-stage__signals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.network-signal {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4d9fff, #78d6ff);
+  box-shadow: 0 0 20px rgba(77, 159, 255, 0.85);
+  left: var(--start-x);
+  top: var(--start-y);
+  transform: translate(-50%, -50%);
+  animation: signal-travel 1.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.network-stage--light .network-signal {
+  box-shadow: 0 0 18px rgba(46, 122, 255, 0.65);
+}
+
+@keyframes signal-travel {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+</style>
