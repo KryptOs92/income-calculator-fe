@@ -1,5 +1,5 @@
 import { defineBoot } from '#q-app/wrappers';
-import axios, { type AxiosInstance } from 'axios';
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -15,6 +15,24 @@ declare module 'vue' {
 // "export default () => {}" function below (which runs individually
 // for each client)
 const api = axios.create({ baseURL: 'https://api.example.com' });
+
+const applyAuthToken = (config: InternalAxiosRequestConfig) => {
+  if (typeof window === 'undefined') {
+    return config;
+  }
+
+  const token = window.localStorage.getItem('tk');
+
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+};
+
+axios.interceptors.request.use(applyAuthToken);
+api.interceptors.request.use(applyAuthToken);
 
 export default defineBoot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
