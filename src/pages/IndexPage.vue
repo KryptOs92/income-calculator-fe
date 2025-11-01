@@ -49,7 +49,7 @@
       </div>
 
       <div
-        v-for="server in servers"
+        v-for="server in serverNodes"
         :key="server.id"
         class="server-node"
         :class="{
@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 
 type ServerNode = {
@@ -129,22 +129,41 @@ const $q = useQuasar();
 
 const isDark = computed(() => $q.dark.isActive);
 
-const OCTAGON_NODE_COUNT = 8;
+const SERVER_COUNT = 8;
+const SERVER_IDS = Array.from({ length: SERVER_COUNT }, (_, index) => `node-${index + 1}`);
 const OCTAGON_RADIUS = 32;
 
-const servers = ref<ServerNode[]>(
-  Array.from({ length: OCTAGON_NODE_COUNT }, (_, index) => {
-    const angle = (Math.PI * 2 * index) / OCTAGON_NODE_COUNT - Math.PI / 2;
+const desktopPositions = SERVER_IDS.map((_, index) => {
+  const angle = (Math.PI * 2 * index) / SERVER_COUNT - Math.PI / 2;
 
-    return {
-      id: `node-${index + 1}`,
-      position: {
-        x: Math.round(50 + OCTAGON_RADIUS * Math.cos(angle)),
-        y: Math.round(50 + OCTAGON_RADIUS * Math.sin(angle)),
-      },
-    };
-  }),
-);
+  return {
+    x: Math.round(50 + OCTAGON_RADIUS * Math.cos(angle)),
+    y: Math.round(50 + OCTAGON_RADIUS * Math.sin(angle)),
+  };
+});
+
+const mobilePositions: Array<{ x: number; y: number }> = [
+  { x: 18, y: 25 },
+  { x: 38, y: 25 },
+  { x: 62, y: 25 },
+  { x: 82, y: 25 },
+  { x: 18, y: 75 },
+  { x: 38, y: 75 },
+  { x: 62, y: 75 },
+  { x: 82, y: 75 },
+];
+
+const serverNodes = computed<ServerNode[]>(() => {
+  const positions = $q.screen.lt.md ? mobilePositions : desktopPositions;
+
+  return SERVER_IDS.map((id, index) => ({
+    id,
+    position: (() => {
+      const resolved = positions[index] ?? desktopPositions[index] ?? { x: 50, y: 50 };
+      return { x: resolved.x, y: resolved.y };
+    })(),
+  }));
+});
 
 const activeAlert = ref<string | null>(null);
 const buttonHighlighted = ref(false);
@@ -175,14 +194,18 @@ const shuffle = <T>(items: readonly T[]) => {
 
 const resetHighlights = () => {
   const initial: Record<string, boolean> = {};
-  servers.value.forEach((server) => {
+  serverNodes.value.forEach((server) => {
     initial[server.id] = false;
   });
   highlightedServers.value = initial;
 };
 
+watch(serverNodes, () => {
+  resetHighlights();
+});
+
 const runAcknowledgements = async (source: ServerNode) => {
-  const others = shuffle(servers.value.filter((server) => server.id !== source.id));
+  const others = shuffle(serverNodes.value.filter((server) => server.id !== source.id));
 
   for (const node of others) {
     highlightedServers.value = {
@@ -209,12 +232,14 @@ const triggerAlert = async () => {
     return;
   }
 
-  if (!servers.value.length) {
+  const nodes = serverNodes.value;
+
+  if (!nodes.length) {
     return;
   }
 
-  const randomIndex = Math.floor(Math.random() * servers.value.length);
-  const server = servers.value[randomIndex];
+  const randomIndex = Math.floor(Math.random() * nodes.length);
+  const server = nodes[randomIndex];
 
   if (!server) {
     return;
@@ -313,7 +338,7 @@ const generateConsumptionValue = () =>
 const initializeConsumptions = () => {
   const initial: Record<string, number> = {};
 
-  servers.value.forEach((server) => {
+  serverNodes.value.forEach((server) => {
     initial[server.id] = generateConsumptionValue();
   });
 
@@ -734,5 +759,31 @@ onBeforeUnmount(() => {
 .reward-leave-to {
   opacity: 0;
   transform: translate(-50%, -40%);
+}
+
+@media (max-width: 600px) {
+  .network-stage {
+    padding: 16px 12px 24px;
+  }
+
+  .server-node__consumption {
+    bottom: -28px;
+  }
+
+  .network-hub {
+    width: 100%;
+  }
+
+  .block-chain {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 4px;
+  }
+
+  .block-chain__block {
+    flex: 0 0 auto;
+  }
 }
 </style>
