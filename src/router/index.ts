@@ -6,6 +6,7 @@ import {
   createWebHistory,
 } from 'vue-router';
 import routes from './routes';
+import { useUserStore } from 'src/stores/user-store';
 
 /*
  * If not building with SSR mode, you can
@@ -37,6 +38,9 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       return;
     }
 
+    const userStore = useUserStore();
+    userStore.evaluateToken();
+
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
     if (!requiresAuth) {
@@ -44,9 +48,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       return;
     }
 
-    const token = window.localStorage.getItem('tk');
-
-    if (token) {
+    if (userStore.isAuthenticated) {
       next();
       return;
     }
