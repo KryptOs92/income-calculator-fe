@@ -14,6 +14,7 @@ export default {
     passwordRequired: 'Please enter a password.',
     passwordTooShort: 'Password must be at least 8 characters.',
     passwordTooLong: 'Password cannot exceed 128 characters.',
+    passwordWeak: 'Password must contain at least one uppercase letter and one number.',
     confirmPasswordRequired: 'Please confirm your password.',
     passwordMismatch: 'Passwords must match.',
     genericError: 'Registration failed. Please try again later.',

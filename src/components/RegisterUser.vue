@@ -111,6 +111,7 @@ const EMAIL_MAX_LENGTH = 255;
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 128;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_COMPLEXITY_REGEX = /^(?=.*[A-Z])(?=.*\d).+$/;
 
 const form = reactive({
   name: '',
@@ -197,6 +198,11 @@ const handleSubmit = async () => {
 
   if (form.password.length > PASSWORD_MAX_LENGTH) {
     setErrorMessage('registerUser.passwordTooLong');
+    return;
+  }
+
+  if (!PASSWORD_COMPLEXITY_REGEX.test(form.password)) {
+    setErrorMessage('registerUser.passwordWeak');
     return;
   }
 
