@@ -10,8 +10,11 @@
       <div
         v-for="node in serverNodes"
         :key="node.id"
-        class="signin-node"
-        :class="{ 'signin-node--dynamic': node.kind === 'dynamic' }"
+        :class="[
+          'signin-node',
+          { 'signin-node--dynamic': node.kind === 'dynamic' },
+          isShaking ? 'signin-node--shake' : null
+        ]"
         :style="{
           top: `${node.position.y}%`,
           left: `${node.position.x}%`
@@ -93,6 +96,7 @@ const createBaseNodes = (): ServerNode[] =>
 
 const serverNodes = ref<ServerNode[]>(createBaseNodes());
 const eyesClosed = ref(false);
+const isShaking = ref(false);
 
 const cursor = reactive({
   x: 0,
@@ -105,6 +109,8 @@ const stageSize = reactive({
 });
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+let shakeTimer: number | undefined;
 
 const updateBaseNodePositions = () => {
   const positions = getBasePositions();
@@ -228,6 +234,21 @@ const handleStageClick = (event: MouseEvent) => {
 
 const handleLoginFailed = () => {
   eyesClosed.value = true;
+
+  if (shakeTimer) {
+    window.clearTimeout(shakeTimer);
+  }
+
+  isShaking.value = false;
+
+  void nextTick(() => {
+    isShaking.value = true;
+    shakeTimer = window.setTimeout(() => {
+      isShaking.value = false;
+      shakeTimer = undefined;
+    }, 1100);
+  });
+
   window.setTimeout(() => {
     eyesClosed.value = false;
   }, 1200);
@@ -235,6 +256,11 @@ const handleLoginFailed = () => {
 
 const handleLoginSuccess = () => {
   eyesClosed.value = false;
+  if (shakeTimer) {
+    window.clearTimeout(shakeTimer);
+    shakeTimer = undefined;
+  }
+  isShaking.value = false;
 };
 
 onMounted(() => {
@@ -247,6 +273,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateStageMetrics);
+  if (shakeTimer) {
+    window.clearTimeout(shakeTimer);
+  }
 });
 
 watch(
@@ -392,6 +421,33 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
   background: rgba(13, 18, 38, 0.85);
   color: #f1f5ff;
   box-shadow: 0 18px 45px rgba(5, 9, 21, 0.55);
+}
+
+.signin-node--shake {
+  animation: signin-node-shake 0.75s ease;
+}
+
+.signin-node--shake.signin-node--dynamic {
+  animation-duration: 0.85s;
+}
+
+@keyframes signin-node-shake {
+  0%,
+  100% {
+    transform: rotate(0deg) translate3d(0, 0, 0);
+  }
+  20% {
+    transform: rotate(-6deg) translate3d(-2px, 0, 0);
+  }
+  40% {
+    transform: rotate(5deg) translate3d(2px, 0, 0);
+  }
+  60% {
+    transform: rotate(-4deg) translate3d(-1px, 0, 0);
+  }
+  80% {
+    transform: rotate(3deg) translate3d(1px, 0, 0);
+  }
 }
 
 @media (max-width: 600px) {
