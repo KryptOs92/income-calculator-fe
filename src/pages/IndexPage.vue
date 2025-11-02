@@ -1,6 +1,8 @@
 <template>
   <q-page class="index-page q-pa-none">
     <div
+      ref="stageRef"
+      @click="handleStageClick"
       :class="[
         'network-stage',
         isDark ? 'network-stage--dark' : 'network-stage--light'
@@ -48,6 +50,20 @@
         </transition-group>
       </div>
 
+      <div class="network-stage__spawns">
+        <transition-group name="spawn" tag="div">
+          <div
+            v-for="spawn in spawnPopups"
+            :key="spawn.id"
+            :class="['spawn-pulse', spawn.success ? 'spawn-pulse--success' : 'spawn-pulse--fail']"
+            :style="{
+              '--spawn-x': `${spawn.position.x}%`,
+              '--spawn-y': `${spawn.position.y}%`
+            }"
+          />
+        </transition-group>
+      </div>
+
       <div
         v-for="server in serverNodes"
         :key="server.id"
@@ -74,7 +90,7 @@
         </div>
       </div>
 
-      <q-card class="network-hub column items-center justify-center q-pa-lg">
+      <q-card ref="hubRef" class="network-hub column items-center justify-center q-pa-lg">
         <transition-group name="block-chain" tag="div" class="block-chain q-mb-lg">
           <div
             v-for="block in blocks"
@@ -110,6 +126,7 @@ type ServerNode = {
     x: number;
     y: number;
   };
+  kind: 'base' | 'dynamic';
 };
 
 type Block = {
@@ -124,6 +141,10 @@ type Popup = {
     x: number;
     y: number;
   };
+};
+
+type SpawnFeedback = Popup & {
+  success: boolean;
 };
 
 const $q = useQuasar();
@@ -155,17 +176,21 @@ const mobilePositions: Array<{ x: number; y: number }> = [
   { x: 82, y: 75 },
 ];
 
-const serverNodes = computed<ServerNode[]>(() => {
-  const positions = $q.screen.lt.md ? mobilePositions : desktopPositions;
+const getBasePositions = () => ($q.screen.lt.md ? mobilePositions : desktopPositions);
 
-  return SERVER_IDS.map((id, index) => ({
-    id,
-    position: (() => {
-      const resolved = positions[index] ?? desktopPositions[index] ?? { x: 50, y: 50 };
-      return { x: resolved.x, y: resolved.y };
-    })(),
-  }));
-});
+const createBaseNodes = (): ServerNode[] =>
+  SERVER_IDS.map((id, index) => {
+    const basePosition = getBasePositions()[index] ?? { x: 50, y: 50 };
+    return {
+      id,
+      position: { ...basePosition },
+      kind: 'base',
+    };
+  });
+
+const stageRef = ref<HTMLElement | null>(null);
+const hubRef = ref<HTMLElement | null>(null);
+const serverNodes = ref<ServerNode[]>(createBaseNodes());
 
 const activeAlert = ref<string | null>(null);
 const buttonHighlighted = ref(false);
@@ -174,6 +199,7 @@ const latestBlockId = ref<number | null>(null);
 const serverConsumptions = ref<Record<string, number>>({});
 const rewardPopups = ref<Popup[]>([]);
 const ackPopups = ref<Popup[]>([]);
+const spawnPopups = ref<SpawnFeedback[]>([]);
 const highlightedServers = ref<Record<string, boolean>>({});
 
 let alertTimer: number | undefined;
@@ -194,6 +220,8 @@ const shuffle = <T>(items: readonly T[]) => {
   return array;
 };
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 const resetHighlights = () => {
   const initial: Record<string, boolean> = {};
   serverNodes.value.forEach((server) => {
@@ -202,9 +230,36 @@ const resetHighlights = () => {
   highlightedServers.value = initial;
 };
 
-watch(serverNodes, () => {
-  resetHighlights();
-});
+watch(
+  serverNodes,
+  () => {
+    resetHighlights();
+  },
+  { deep: true },
+);
+
+const updateBaseNodePositions = () => {
+  const positions = getBasePositions();
+  serverNodes.value = serverNodes.value.map((node) => {
+    if (node.kind !== 'base') {
+      return node;
+    }
+    const baseIndex = SERVER_IDS.indexOf(node.id);
+    const basePosition = positions[baseIndex] ?? { x: 50, y: 50 };
+    return {
+      ...node,
+      position: { ...basePosition },
+    };
+  });
+};
+
+watch(
+  () => $q.screen.lt.md,
+  () => {
+    updateBaseNodePositions();
+    resetHighlights();
+  },
+);
 
 const runAcknowledgements = async (source: ServerNode) => {
   const others = shuffle(serverNodes.value.filter((server) => server.id !== source.id));
@@ -336,6 +391,120 @@ const generateConsumptionValue = () =>
   parseFloat(
     (MIN_CONSUMPTION + Math.random() * (MAX_CONSUMPTION - MIN_CONSUMPTION)).toFixed(1),
   );
+
+const MAX_TOTAL_NODES = 20;
+const addServerNodeAtPosition = (position: { x: number; y: number }) => {
+  if (serverNodes.value.length >= MAX_TOTAL_NODES) {
+    addSpawnFeedback(position, false);
+    addHubPulse(false);
+    return;
+  }
+
+  const id = `node-dyn-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const clampedPosition = {
+    x: clamp(position.x, 5, 95),
+    y: clamp(position.y, 8, 92),
+  };
+
+  const newNode: ServerNode = {
+    id,
+    position: clampedPosition,
+    kind: 'dynamic',
+  };
+
+  serverNodes.value = [...serverNodes.value, newNode];
+
+  serverConsumptions.value = {
+    ...serverConsumptions.value,
+    [id]: generateConsumptionValue(),
+  };
+
+  highlightedServers.value = {
+    ...highlightedServers.value,
+    [id]: false,
+  };
+
+  addSpawnFeedback(clampedPosition, true);
+  addHubPulse(true);
+};
+
+const handleStageClick = (event: MouseEvent) => {
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
+
+  const stageEl = stageRef.value;
+  if (!stageEl) {
+    return;
+  }
+
+  const target = event.target as HTMLElement | null;
+  const hubEl = target?.closest('.network-hub');
+
+  if (hubEl) {
+    addHubPulse(false);
+    return;
+  }
+
+  if (target && target.closest('.server-node')) {
+    return;
+  }
+
+  const rect = stageEl.getBoundingClientRect();
+  const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
+  const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
+
+  if (!Number.isFinite(xPercent) || !Number.isFinite(yPercent)) {
+    return;
+  }
+
+  addServerNodeAtPosition({
+    x: xPercent,
+    y: yPercent,
+  });
+};
+
+const addSpawnFeedback = (position: { x: number; y: number }, success: boolean) => {
+  const spawnId = Date.now() + Math.random();
+
+  const clampedPosition = {
+    x: clamp(position.x, 5, 95),
+    y: clamp(position.y, 8, 92),
+  };
+
+  spawnPopups.value.push({
+    id: spawnId,
+    position: clampedPosition,
+    success,
+  });
+
+  window.setTimeout(() => {
+    spawnPopups.value = spawnPopups.value.filter((spawn) => spawn.id !== spawnId);
+  }, success ? 1200 : 800);
+};
+
+const addHubPulse = (success: boolean) => {
+  const stageEl = stageRef.value;
+  const hubEl = hubRef.value;
+
+  if (!stageEl || !hubEl) {
+    return;
+  }
+
+  const stageRect = stageEl.getBoundingClientRect();
+  const hubRect = hubEl.getBoundingClientRect();
+
+  const xPercent = ((hubRect.left + hubRect.width / 2 - stageRect.left) / stageRect.width) * 100;
+  const yPercent = ((hubRect.top + hubRect.height / 2 - stageRect.top) / stageRect.height) * 100;
+
+  addSpawnFeedback(
+    {
+      x: xPercent,
+      y: yPercent,
+    },
+    success,
+  );
+};
 
 const initializeConsumptions = () => {
   const initial: Record<string, number> = {};
@@ -708,6 +877,78 @@ onBeforeUnmount(() => {
   inset: 0;
   pointer-events: none;
   max-height: 100%;
+}
+
+.network-stage__spawns {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.spawn-pulse {
+  position: absolute;
+  left: var(--spawn-x);
+  top: var(--spawn-y);
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  opacity: 0;
+  border: 2px solid currentColor;
+}
+
+.spawn-pulse--success {
+  color: #4ade80;
+  animation: spawn-pulse-success 1.1s ease-out forwards;
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.45);
+}
+
+.spawn-pulse--fail {
+  color: #f87171;
+  animation: spawn-pulse-fail 0.9s ease-out forwards;
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.35);
+}
+
+.spawn-enter-active,
+.spawn-leave-active,
+.spawn-move {
+  transition: opacity 0.2s ease;
+}
+
+.spawn-enter-from,
+.spawn-leave-to {
+  opacity: 0;
+}
+
+@keyframes spawn-pulse-success {
+  0% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  60% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.5);
+  }
+}
+
+@keyframes spawn-pulse-fail {
+  0% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.9);
+  }
 }
 
 .reward-popup {

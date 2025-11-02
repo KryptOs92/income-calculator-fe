@@ -15,7 +15,7 @@
 import { computed } from 'vue'
 import { useQuasar } from 'quasar'
 
-const props = defineProps<{
+defineProps<{
   label: string
   logo: string
 }>()
