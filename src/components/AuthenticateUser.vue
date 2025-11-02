@@ -119,12 +119,14 @@ const handleSubmit = async () => {
   if (!form.email) {
     statusMessage.value = t('authenticateUser.emailRequired');
     statusMessageType.value = 'error';
+    emit('login-failed');
     return;
   }
 
   if (!form.password) {
     statusMessage.value = t('authenticateUser.passwordRequired');
     statusMessageType.value = 'error';
+    emit('login-failed');
     return;
   }
 

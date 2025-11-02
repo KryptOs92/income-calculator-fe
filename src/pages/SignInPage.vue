@@ -31,6 +31,28 @@
         <q-icon name="dns" size="38px" />
       </div>
 
+      <div class="sign-stage__popups">
+        <transition-group name="sign-popup" tag="div">
+          <div
+            v-for="popup in authPopups"
+            :key="popup.id"
+            class="sign-popup"
+            :class="`sign-popup--${popup.type}`"
+            :style="{
+              top: `${popup.position.y}%`,
+              left: `${popup.position.x}%`
+            }"
+          >
+            <div class="sign-popup__content">
+              <q-icon
+                :name="popup.type === 'success' ? 'thumb_up_alt' : 'thumb_down_alt'"
+                size="22px"
+              />
+            </div>
+          </div>
+        </transition-group>
+      </div>
+
       <q-card ref="hubRef" class="sign-card">
         <div
           class="sign-card__inner"
@@ -47,6 +69,7 @@
             <RegisterUser
               @close="handleRegisterClose"
               @success="handleRegisterSuccess"
+              @failure="handleRegisterFailure"
             />
           </div>
         </div>
@@ -70,6 +93,14 @@ type ServerNode = {
   kind: 'base' | 'dynamic';
 };
 
+type AuthPopup = {
+  id: number;
+  type: 'success' | 'error';
+  position: {
+    x: number;
+    y: number;
+  };
+};
 const $q = useQuasar();
 
 const stageRef = ref<HTMLElement | null>(null);
@@ -88,6 +119,18 @@ const desktopPositions = SERVER_IDS.map((_, index) => {
     y: Math.round(50 + OCTAGON_RADIUS * Math.sin(angle)),
   };
 });
+
+if (desktopPositions.length >= 5) {
+  const topY = Math.max(desktopPositions[0]!.y - 4, 6);
+  desktopPositions[0] = {
+    x: 44,
+    y: topY,
+  };
+  desktopPositions[4] = {
+    x: 56,
+    y: topY,
+  };
+}
 
 const mobilePositions: Array<{ x: number; y: number }> = [
   { x: 18, y: 25 },
@@ -116,6 +159,7 @@ const serverNodes = ref<ServerNode[]>(createBaseNodes());
 const eyesClosed = ref(false);
 const isShaking = ref(false);
 const isRegistering = ref(false);
+const authPopups = ref<AuthPopup[]>([]);
 
 const cursor = reactive({
   x: 0,
@@ -130,6 +174,66 @@ const stageSize = reactive({
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 let shakeTimer: number | undefined;
+let eyesTimer: number | undefined;
+
+const triggerEyesClosure = () => {
+  eyesClosed.value = true;
+
+  if (eyesTimer) {
+    window.clearTimeout(eyesTimer);
+  }
+
+  eyesTimer = window.setTimeout(() => {
+    eyesClosed.value = false;
+    eyesTimer = undefined;
+  }, 1200);
+};
+
+const triggerNodeShake = () => {
+  if (shakeTimer) {
+    window.clearTimeout(shakeTimer);
+  }
+
+  isShaking.value = false;
+
+  void nextTick(() => {
+    isShaking.value = true;
+    shakeTimer = window.setTimeout(() => {
+      isShaking.value = false;
+      shakeTimer = undefined;
+    }, 1100);
+  });
+};
+
+const addAuthPopup = (type: AuthPopup['type']) => {
+  const nodes = serverNodes.value;
+
+  if (!nodes.length) {
+    return;
+  }
+
+  const timestamp = Date.now();
+  const createdIds: number[] = [];
+  const additions = nodes.map((node, index) => {
+    const id = timestamp + index + Math.random();
+    createdIds.push(id);
+    return {
+      id,
+      type,
+      position: {
+        x: node.position.x,
+        y: Math.max(5, node.position.y - 12),
+      },
+    } satisfies AuthPopup;
+  });
+
+  authPopups.value = [...authPopups.value, ...additions];
+
+  window.setTimeout(() => {
+    const idSet = new Set(createdIds);
+    authPopups.value = authPopups.value.filter((popup) => !idSet.has(popup.id));
+  }, 1500);
+};
 
 const updateBaseNodePositions = () => {
   const positions = getBasePositions();
@@ -256,25 +360,9 @@ const handleLoginFailed = () => {
     return;
   }
 
-  eyesClosed.value = true;
-
-  if (shakeTimer) {
-    window.clearTimeout(shakeTimer);
-  }
-
-  isShaking.value = false;
-
-  void nextTick(() => {
-    isShaking.value = true;
-    shakeTimer = window.setTimeout(() => {
-      isShaking.value = false;
-      shakeTimer = undefined;
-    }, 1100);
-  });
-
-  window.setTimeout(() => {
-    eyesClosed.value = false;
-  }, 1200);
+  addAuthPopup('error');
+  triggerEyesClosure();
+  triggerNodeShake();
 };
 
 const handleLoginSuccess = () => {
@@ -284,6 +372,7 @@ const handleLoginSuccess = () => {
     shakeTimer = undefined;
   }
   isShaking.value = false;
+  addAuthPopup('success');
 };
 
 const handleRegisterRequest = () => {
@@ -303,8 +392,14 @@ const handleRegisterClose = () => {
 const handleRegisterSuccess = () => {
   eyesClosed.value = false;
   isShaking.value = false;
+  addAuthPopup('success');
 };
 
+const handleRegisterFailure = () => {
+  addAuthPopup('error');
+  triggerEyesClosure();
+  triggerNodeShake();
+};
 onMounted(() => {
   void nextTick(() => {
     updateStageMetrics();
@@ -317,6 +412,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', updateStageMetrics);
   if (shakeTimer) {
     window.clearTimeout(shakeTimer);
+  }
+  if (eyesTimer) {
+    window.clearTimeout(eyesTimer);
   }
 });
 
@@ -342,13 +440,90 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
 .sign-stage {
   position: relative;
   flex: 1;
-  min-height: 100vh;
+
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: clamp(16px, 4vw, 40px);
   transition: background-color 0.3s ease;
+}
+
+.sign-stage__popups {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.sign-popup {
+  position: absolute;
+  transform: translate(-50%, -110%);
+  animation: sign-popup-pop 1.25s ease forwards;
+}
+
+.sign-popup__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.sign-popup--success .sign-popup__content {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.94), rgba(16, 185, 129, 0.9));
+  color: #052e16;
+}
+
+.sign-popup--error .sign-popup__content {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.94), rgba(239, 68, 68, 0.9));
+  color: #7f1d1d;
+}
+
+.sign-popup :deep(.q-icon) {
+  color: currentColor;
+}
+
+.sign-popup-enter-active,
+.sign-popup-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.sign-popup-enter-from,
+.sign-popup-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -130%);
+}
+
+.sign-popup-leave-active {
+  display: none;
+}
+
+.sign-stage--dark .sign-popup--success .sign-popup__content {
+  color: #d1fae5;
+}
+
+.sign-stage--dark .sign-popup--error .sign-popup__content {
+  color: #fee2e2;
+}
+
+@keyframes sign-popup-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -130%) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -110%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -135%) scale(1.05);
+  }
 }
 
 .sign-stage::before {

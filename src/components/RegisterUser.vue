@@ -99,6 +99,7 @@ import { api } from 'boot/axios';
 type EmitEvents = {
   (event: 'close'): void;
   (event: 'success'): void;
+  (event: 'failure'): void;
 };
 
 const emit = defineEmits<EmitEvents>();
@@ -130,6 +131,7 @@ const clearStatusMessage = () => {
 const setErrorMessage = (key: string) => {
   statusMessage.value = t(key);
   statusMessageType.value = 'error';
+  emit('failure');
 };
 
 const resetForm = () => {
@@ -152,6 +154,7 @@ const handleBackToLogin = () => {
 
 const handleSubmit = async () => {
   if (isSubmitting.value) {
+    emit('failure');
     return;
   }
 
