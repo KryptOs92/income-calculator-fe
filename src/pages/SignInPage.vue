@@ -338,6 +338,7 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
   height: 18px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,6 +348,7 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
 
 .sign-stage--dark .node-eye {
   background: rgba(240, 246, 255, 0.92);
+  border-color: rgba(226, 232, 240, 0.85);
 }
 
 .node-eye__pupil {
@@ -373,7 +375,7 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
 }
 
 .sign-stage--dark .node-eyes--closed .node-eye::after {
-  background: rgba(226, 232, 240, 0.8);
+  background: rgba(15, 23, 42, 0.92);
 }
 
 .sign-card {
