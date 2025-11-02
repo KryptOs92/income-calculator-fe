@@ -120,15 +120,82 @@
           </div>
         </transition-group>
         <q-btn
-          color="primary"
-          class="network-hub__button text-subtitle2 q-mt-md"
-          :class="{ 'network-hub__button--alert': buttonHighlighted }"
-          unelevated
+          color="secondary"
+          class="network-hub__info-button q-mt-sm"
+          :class="{ 'network-hub__info-button--highlight': buttonHighlighted }"
+          outline
           size="md"
-          :to="{ name: 'overview' }"
-          :label="t('indexPage.cta')"
+          :label="t('indexPage.aboutButton')"
+          @click="openAboutDialog"
         />
       </q-card>
+
+      <q-dialog v-model="aboutDialogOpen" transition-show="scale" transition-hide="scale">
+        <q-card
+          class="about-modal column no-wrap"
+          :class="isDark ? 'about-modal--dark' : 'about-modal--light'"
+        >
+          <div class="about-modal__header row items-center q-mb-md">
+            <div class="about-modal__badge row items-center justify-center q-mr-sm">
+              <q-icon name="psychology" size="28px" />
+            </div>
+            <div class="about-modal__title text-h6">
+              {{ t('indexPage.aboutTitle') }}
+            </div>
+            <q-space />
+            <q-btn icon="close" flat round dense @click="aboutDialogOpen = false" />
+          </div>
+
+          <div class="about-modal__body column q-gutter-lg">
+            <div class="about-steps column items-stretch q-gutter-lg">
+              <template v-for="(step, index) in aboutSlides" :key="step.id">
+                <div class="about-step row no-wrap items-start q-gutter-md">
+                  <div class="about-step__icon row items-center justify-center">
+                    <q-icon :name="step.icon" size="32px" />
+                  </div>
+                  <div class="about-step__content column q-gutter-xs">
+                    <div class="text-subtitle1 about-step__title">
+                      {{ step.title }}
+                    </div>
+                    <p class="text-body2 about-step__text">
+                      {{ step.description }}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  v-if="index < aboutSlides.length - 1"
+                  class="about-step__connector row items-center justify-center"
+                >
+                  <div class="about-step__line" />
+                  <q-icon name="arrow_downward" size="20px" class="about-step__arrow" />
+                  <div class="about-step__line" />
+                </div>
+              </template>
+            </div>
+
+            <div class="about-modal__summary">
+              <div class="text-subtitle1 q-mb-xs">
+                {{ t('indexPage.aboutSummaryTitle') }}
+              </div>
+              <p class="text-body2">
+                {{ t('indexPage.aboutSummaryBody') }}
+              </p>
+            </div>
+          </div>
+
+          <div class="about-modal__actions q-mt-md">
+            <q-btn
+              color="primary"
+              class="full-width"
+              unelevated
+              :label="t('indexPage.cta')"
+              :to="{ name: 'overview' }"
+              @click="aboutDialogOpen = false"
+            />
+          </div>
+        </q-card>
+      </q-dialog>
     </div>
   </q-page>
 </template>
@@ -163,6 +230,13 @@ type Popup = {
 
 type SpawnFeedback = Popup & {
   success: boolean;
+};
+
+type AboutSlide = {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
 };
 
 const $q = useQuasar();
@@ -227,6 +301,7 @@ const ackPopups = ref<Popup[]>([]);
 const spawnPopups = ref<SpawnFeedback[]>([]);
 const highlightedServers = ref<Record<string, boolean>>({});
 const spawnHighlights = ref<Record<string, boolean>>({});
+const aboutDialogOpen = ref(false);
 
 let alertTimer: number | undefined;
 let blockIndex = 0;
@@ -247,6 +322,33 @@ const shuffle = <T>(items: readonly T[]) => {
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const aboutSlides = computed<AboutSlide[]>(() => [
+  {
+    id: 'validators',
+    icon: 'dns',
+    title: t('indexPage.aboutSlides.validators.title'),
+    description: t('indexPage.aboutSlides.validators.description'),
+  },
+  {
+    id: 'energy',
+    icon: 'bolt',
+    title: t('indexPage.aboutSlides.energy.title'),
+    description: t('indexPage.aboutSlides.energy.description'),
+  },
+  {
+    id: 'rewards',
+    icon: 'currency_exchange',
+    title: t('indexPage.aboutSlides.rewards.title'),
+    description: t('indexPage.aboutSlides.rewards.description'),
+  },
+  {
+    id: 'insights',
+    icon: 'insights',
+    title: t('indexPage.aboutSlides.insights.title'),
+    description: t('indexPage.aboutSlides.insights.description'),
+  },
+]);
 
 const setServerHappy = (serverId: string, value: boolean) => {
   if (value) {
@@ -753,6 +855,10 @@ const formatConsumption = (value?: number) => {
   return value.toFixed(1);
 };
 
+const openAboutDialog = () => {
+  aboutDialogOpen.value = true;
+};
+
 onMounted(() => {
   resetHighlights();
   initializeConsumptions();
@@ -1137,16 +1243,25 @@ onBeforeUnmount(() => {
   letter-spacing: 0.5px;
 }
 
-.network-hub__button {
+.network-hub__info-button {
   min-width: 180px;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 91, 180, 0.35);
+  backdrop-filter: blur(4px);
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
 }
 
-.network-hub__button--alert {
+.network-stage--dark .network-hub__info-button {
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+}
+
+.network-hub__info-button--highlight {
   box-shadow:
     0 0 18px rgba(77, 159, 255, 0.75),
     0 0 36px rgba(77, 159, 255, 0.55);
   transform: translateY(-2px);
+  border-color: rgba(77, 159, 255, 0.55);
 }
 
 .block-chain {
@@ -1217,6 +1332,125 @@ onBeforeUnmount(() => {
 .block-chain-leave-to {
   opacity: 0;
   transform: translateY(20px);
+}
+
+
+.about-modal {
+  width: min(680px, 94vw);
+  max-height: 92vh;
+  padding: 28px;
+  border-radius: 26px;
+  box-shadow: 0 28px 56px rgba(17, 24, 39, 0.32);
+}
+
+.about-modal--light {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(237, 242, 255, 0.96));
+  color: #0f172a;
+}
+
+.about-modal--dark {
+  background: linear-gradient(145deg, rgba(13, 17, 38, 0.95), rgba(19, 28, 58, 0.9));
+  color: #e2e8f0;
+  box-shadow: 0 28px 56px rgba(5, 10, 24, 0.55);
+}
+
+.about-modal__header {
+  gap: 12px;
+}
+
+.about-modal__badge {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #1e3a8a;
+}
+
+.about-modal--dark .about-modal__badge {
+  background: rgba(96, 165, 250, 0.18);
+  color: #bfdbfe;
+}
+
+.about-modal__title {
+  font-weight: 600;
+}
+
+.about-steps {
+  position: relative;
+}
+
+.about-step {
+  padding: 18px 22px;
+  border-radius: 20px;
+  background: rgba(248, 250, 255, 0.82);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.12),
+    inset 0 0 0 1px rgba(77, 107, 177, 0.14);
+}
+
+.about-modal--dark .about-step {
+  background: rgba(20, 27, 62, 0.78);
+  box-shadow:
+    0 12px 26px rgba(4, 10, 32, 0.4),
+    inset 0 0 0 1px rgba(96, 105, 140, 0.24);
+}
+
+.about-step__icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #1e3a8a;
+}
+
+.about-modal--dark .about-step__icon {
+  background: rgba(96, 165, 250, 0.18);
+  color: #bfdbfe;
+}
+
+.about-step__title {
+  font-weight: 600;
+}
+
+.about-step__text {
+  margin: 0;
+  line-height: 1.55;
+  opacity: 0.88;
+}
+
+.about-step__connector {
+  height: 36px;
+  position: relative;
+  color: rgba(59, 130, 246, 0.65);
+  gap: 8px;
+}
+
+.about-step__line {
+  flex: 1;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.about-modal--dark .about-step__line {
+  background: rgba(129, 162, 255, 0.25);
+}
+
+.about-step__arrow {
+  color: currentColor;
+}
+
+.about-modal__summary {
+  border-radius: 20px;
+  padding: 16px 22px;
+  background: rgba(226, 232, 255, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(77, 107, 177, 0.14);
+}
+
+.about-modal--dark .about-modal__summary {
+  background: rgba(30, 41, 89, 0.52);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
 }
 
 .network-stage__rewards {

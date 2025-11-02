@@ -20,13 +20,21 @@
       />
       <q-input
         v-model="form.password"
-        type="password"
+        :type="showPassword ? 'text' : 'password'"
         :label="t('authenticateUser.passwordLabel')"
         dense
         outlined
         :disable="isSubmitting"
         autocomplete="current-password"
-      />
+      >
+        <template #append>
+          <q-icon
+            :name="showPassword ? 'visibility_off' : 'visibility'"
+            :class="['cursor-pointer', isSubmitting ? 'text-grey-5' : null]"
+            @click="togglePasswordVisibility"
+          />
+        </template>
+      </q-input>
 
       <div class="auth-messages column">
         <transition name="auth-message">
@@ -100,9 +108,17 @@ const isSubmitting = ref(false);
 const isResetting = ref(false);
 const statusMessage = ref('');
 const statusMessageType = ref<'error' | 'success'>('success');
+const showPassword = ref(false);
 
 const clearStatusMessage = () => {
   statusMessage.value = '';
+};
+
+const togglePasswordVisibility = () => {
+  if (isSubmitting.value) {
+    return;
+  }
+  showPassword.value = !showPassword.value;
 };
 
 const handleRegisterClick = () => {

@@ -89,6 +89,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useRouter } from 'vue-router';
 import AuthenticateUser from 'src/components/AuthenticateUser.vue';
 import RegisterUser from 'src/components/RegisterUser.vue';
 
@@ -110,6 +111,7 @@ type AuthPopup = {
   };
 };
 const $q = useQuasar();
+const router = useRouter();
 
 const stageRef = ref<HTMLElement | null>(null);
 const hubRef = ref<HTMLElement | null>(null);
@@ -463,6 +465,7 @@ const handleLoginSuccess = () => {
   isShaking.value = false;
   addAuthPopup('success');
   triggerHappyEyes();
+  void router.push({ name: 'overview' });
 };
 
 const handleRegisterRequest = () => {
