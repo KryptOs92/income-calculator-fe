@@ -70,7 +70,8 @@
         class="server-node"
         :class="{
           'server-node--alert': activeAlert === server.id,
-          'server-node--ack': highlightedServers[server.id]
+          'server-node--ack': highlightedServers[server.id],
+          'server-node--spawn': spawnHighlights[server.id]
         }"
         :style="{
           top: `${server.position.y}%`,
@@ -201,6 +202,7 @@ const rewardPopups = ref<Popup[]>([]);
 const ackPopups = ref<Popup[]>([]);
 const spawnPopups = ref<SpawnFeedback[]>([]);
 const highlightedServers = ref<Record<string, boolean>>({});
+const spawnHighlights = ref<Record<string, boolean>>({});
 
 let alertTimer: number | undefined;
 let blockIndex = 0;
@@ -426,6 +428,7 @@ const addServerNodeAtPosition = (position: { x: number; y: number }) => {
 
   addSpawnFeedback(clampedPosition, true);
   addHubPulse(true);
+  triggerSpawnHighlight(id);
 };
 
 const handleStageClick = (event: MouseEvent) => {
@@ -504,6 +507,19 @@ const addHubPulse = (success: boolean) => {
     },
     success,
   );
+};
+
+const triggerSpawnHighlight = (nodeId: string) => {
+  spawnHighlights.value = {
+    ...spawnHighlights.value,
+    [nodeId]: true,
+  };
+
+  window.setTimeout(() => {
+    const highlights = { ...spawnHighlights.value };
+    delete highlights[nodeId];
+    spawnHighlights.value = highlights;
+  }, 900);
 };
 
 const initializeConsumptions = () => {
@@ -630,6 +646,16 @@ onBeforeUnmount(() => {
   background: rgba(46, 110, 85, 0.75);
 }
 
+.server-node--spawn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 28px;
+  border: 2px solid rgba(74, 222, 128, 0.85);
+  animation: node-spawn-ring 0.9s ease-out forwards;
+  pointer-events: none;
+}
+
 .network-stage--light .server-node--ack {
   background: rgba(184, 249, 214, 0.82);
   color: #0f3a2a;
@@ -640,6 +666,10 @@ onBeforeUnmount(() => {
 
 .network-stage--dark .server-node--ack {
   border: 1px solid rgba(144, 255, 206, 0.35);
+}
+
+.network-stage--light .server-node--spawn::after {
+  border-color: rgba(16, 163, 102, 0.75);
 }
 
 .network-stage--light .server-node--alert {
@@ -683,6 +713,21 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.85);
   color: #14213d;
   box-shadow: 0 6px 12px rgba(23, 33, 60, 0.2);
+}
+
+@keyframes node-spawn-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 0.35;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
 }
 
 .network-stage__ack-popups {
