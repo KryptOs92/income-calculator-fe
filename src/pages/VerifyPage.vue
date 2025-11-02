@@ -83,7 +83,15 @@
         </p>
 
         <q-btn
-          v-if="status === 'error'"
+          v-if="status === 'success'"
+          color="primary"
+          unelevated
+          :label="t('verifyPage.goToSignIn')"
+          :to="{ name: 'sign-in' }"
+        />
+
+        <q-btn
+          v-else-if="status === 'error'"
           color="primary"
           unelevated
           :label="t('verifyPage.backToSignIn')"

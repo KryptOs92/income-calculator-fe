@@ -41,7 +41,76 @@
     </q-header>
 
     <q-drawer show-if-above v-model="leftDrawerOpen" side="left" elevated>
-      <!-- drawer content -->
+      <div :class="['main-drawer column fit', isDark ? 'main-drawer--dark' : 'main-drawer--light']">
+        <q-scroll-area class="main-drawer__scroll">
+          <q-list>
+            <q-item
+              v-if="isAuthenticated"
+              v-ripple
+              clickable
+              :to="{ name: 'overview' }"
+              @click="leftDrawerOpen = false"
+            >
+              <q-item-section avatar>
+                <q-icon name="dashboard" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('layout.nav.overview') }}
+              </q-item-section>
+            </q-item>
+            <q-item
+              v-if="isAuthenticated"
+              v-ripple
+              clickable
+              :to="{ path: '/wallets' }"
+              @click="leftDrawerOpen = false"
+            >
+              <q-item-section avatar>
+                <q-icon name="account_balance_wallet" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('layout.nav.wallets') }}
+              </q-item-section>
+            </q-item>
+            <q-item
+              v-ripple
+              clickable
+              :to="{ path: '/' }"
+              @click="leftDrawerOpen = false"
+            >
+              <q-item-section avatar>
+                <q-icon name="help_outline" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('layout.nav.aboutApp') }}
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-scroll-area>
+
+        <div class="main-drawer__footer q-pa-md">
+          <div class="column q-gutter-sm">
+            <q-btn
+              v-if="isAuthenticated"
+              color="primary"
+              icon="logout"
+              unelevated
+              class="full-width"
+              :label="t('layout.nav.logout')"
+              @click="handleLogout"
+            />
+            <q-btn
+              v-else
+              color="primary"
+              unelevated
+              class="full-width"
+              :label="t('layout.nav.signIn')"
+              :to="{ name: 'sign-in' }"
+              @click="leftDrawerOpen = false"
+            />
+          </div>
+        </div>
+      </div>
     </q-drawer>
 
     <q-page-container>
@@ -56,12 +125,16 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import type { MessageLanguages } from 'src/boot/i18n';
+import { useRouter } from 'vue-router';
+import { useUserStore } from 'src/stores/user-store';
 
 const leftDrawerOpen = ref(false);
 const THEME_STORAGE_KEY = 'theme-preference';
 const LOCALE_STORAGE_KEY = 'locale-preference';
 const $q = useQuasar();
 const { locale, t } = useI18n();
+const router = useRouter();
+const userStore = useUserStore();
 const isDark = computed(() => $q.dark.isActive);
 const themeIcon = computed(() => (isDark.value ? 'light_mode' : 'dark_mode'));
 const toggleThemeAriaLabel = computed(() =>
@@ -72,6 +145,7 @@ const localeOptions: Array<{ label: string; value: MessageLanguages }> = [
   { label: 'English', value: 'en-US' },
 ];
 const selectedLocale = ref<MessageLanguages>(locale.value as MessageLanguages);
+const isAuthenticated = computed(() => userStore.isAuthenticated);
 
 function toggleLeftDrawer () {
   leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -89,6 +163,12 @@ const onLocaleChange = (value: MessageLanguages) => {
   locale.value = value;
 };
 
+const handleLogout = () => {
+  userStore.logout();
+  leftDrawerOpen.value = false;
+  void router.push({ name: 'sign-in' });
+};
+
 watch(locale, (newLocale) => {
   selectedLocale.value = newLocale as MessageLanguages;
   if (typeof window !== 'undefined') {
@@ -97,6 +177,8 @@ watch(locale, (newLocale) => {
 });
 
 onMounted(() => {
+  userStore.evaluateToken();
+
   if (typeof window === 'undefined') {
     return;
   }
@@ -112,3 +194,31 @@ onMounted(() => {
   selectedLocale.value = locale.value as MessageLanguages;
 });
 </script>
+
+<style scoped>
+.main-drawer {
+  display: flex;
+}
+
+.main-drawer__scroll {
+  flex: 1;
+}
+
+.main-drawer--light {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+}
+
+.main-drawer--dark {
+  background: rgba(15, 23, 42, 0.94);
+  color: #e2e8f0;
+}
+
+.main-drawer__footer {
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.main-drawer--dark .main-drawer__footer {
+  border-top-color: rgba(226, 232, 240, 0.12);
+}
+</style>

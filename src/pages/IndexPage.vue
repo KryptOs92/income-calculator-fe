@@ -794,7 +794,6 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow: hidden;
   width: 100%;
-  height: 100vh;
   max-height: 100vh;
   box-sizing: border-box;
   display: flex;

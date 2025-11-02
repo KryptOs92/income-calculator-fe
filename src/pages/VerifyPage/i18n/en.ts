@@ -7,5 +7,6 @@ export default {
     errorTitle: 'We could not verify your email.',
     errorMessage: 'Something went wrong while validating your token. Please request a new verification email.',
     backToSignIn: 'Back to sign in',
+    goToSignIn: 'Proceed to sign in',
   },
 };

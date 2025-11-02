@@ -64,5 +64,12 @@ export const useUserStore = defineStore('user', {
 
       this.isAuthenticated = true;
     },
+
+    logout() {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+      }
+      this.isAuthenticated = false;
+    },
   },
 });

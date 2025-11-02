@@ -7,5 +7,6 @@ export default {
     errorTitle: 'Non siamo riusciti a verificare la tua email.',
     errorMessage: 'Qualcosa è andato storto durante la verifica del token. Richiedi una nuova email di conferma.',
     backToSignIn: 'Torna alla pagina di accesso',
+    goToSignIn: 'Effettua il login',
   },
 };
