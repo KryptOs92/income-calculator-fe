@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-const TOKEN_STORAGE_KEY = 'auth-token';
+export const TOKEN_STORAGE_KEY = 'auth-token';
 
 type JwtPayload = {
   exp?: number;
@@ -9,7 +9,13 @@ type JwtPayload = {
 
 function parseJwt(token: string): JwtPayload | null {
   try {
-    const payload = token.split('.')[1];
+    const segments = token.split('.');
+    const payload = segments[1];
+
+    if (!payload) {
+      return null;
+    }
+
     const json = decodeURIComponent(
       atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
         .split('')
@@ -18,7 +24,7 @@ function parseJwt(token: string): JwtPayload | null {
     );
 
     return JSON.parse(json) as JwtPayload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

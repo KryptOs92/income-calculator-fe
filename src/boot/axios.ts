@@ -1,7 +1,14 @@
-import { defineBoot } from '#q-app/wrappers';
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
+import { defineBoot } from "#q-app/wrappers";
+import axios, {
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from "axios";
+import { TOKEN_STORAGE_KEY } from "src/stores/user-store";
 
-declare module 'vue' {
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/";
+
+declare module "vue" {
   interface ComponentCustomProperties {
     $axios: AxiosInstance;
     $api: AxiosInstance;
@@ -14,14 +21,14 @@ declare module 'vue' {
 // good idea to move this instance creation inside of the
 // "export default () => {}" function below (which runs individually
 // for each client)
-const api = axios.create({ baseURL: 'https://api.example.com' });
+const api = axios.create({ baseURL: API_BASE_URL });
 
 const applyAuthToken = (config: InternalAxiosRequestConfig) => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return config;
   }
 
-  const token = window.localStorage.getItem('tk');
+  const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
 
   if (token) {
     config.headers = config.headers ?? {};
