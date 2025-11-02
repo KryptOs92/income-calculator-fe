@@ -1,6 +1,7 @@
 import indexPage from 'src/pages/IndexPage/i18n/en';
 import mainLayout from 'src/layouts/MainLayout/i18n/en';
 import authenticateUser from 'src/components/AuthenticateUser/i18n/en';
+import registerUser from 'src/components/RegisterUser/i18n/en';
 import signInPage from 'src/pages/SignInPage/i18n/en';
 
 export default {
@@ -9,5 +10,6 @@ export default {
   ...mainLayout,
   ...indexPage,
   ...authenticateUser,
+  ...registerUser,
   ...signInPage,
 };

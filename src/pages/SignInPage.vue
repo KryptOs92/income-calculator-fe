@@ -31,8 +31,25 @@
         <q-icon name="dns" size="38px" />
       </div>
 
-      <q-card ref="hubRef" class="sign-card column items-center justify-center q-pa-lg">
-        <AuthenticateUser @login-success="handleLoginSuccess" @login-failed="handleLoginFailed" />
+      <q-card ref="hubRef" class="sign-card">
+        <div
+          class="sign-card__inner"
+          :class="{ 'sign-card__inner--flipped': isRegistering }"
+        >
+          <div class="sign-card__face sign-card__face--front column items-center justify-center q-pa-lg">
+            <AuthenticateUser
+              @login-success="handleLoginSuccess"
+              @login-failed="handleLoginFailed"
+              @register-request="handleRegisterRequest"
+            />
+          </div>
+          <div class="sign-card__face sign-card__face--back column items-center justify-center q-pa-lg">
+            <RegisterUser
+              @close="handleRegisterClose"
+              @success="handleRegisterSuccess"
+            />
+          </div>
+        </div>
       </q-card>
     </div>
   </q-page>
@@ -42,6 +59,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import AuthenticateUser from 'src/components/AuthenticateUser.vue';
+import RegisterUser from 'src/components/RegisterUser.vue';
 
 type ServerNode = {
   id: string;
@@ -97,6 +115,7 @@ const createBaseNodes = (): ServerNode[] =>
 const serverNodes = ref<ServerNode[]>(createBaseNodes());
 const eyesClosed = ref(false);
 const isShaking = ref(false);
+const isRegistering = ref(false);
 
 const cursor = reactive({
   x: 0,
@@ -233,6 +252,10 @@ const handleStageClick = (event: MouseEvent) => {
 };
 
 const handleLoginFailed = () => {
+  if (isRegistering.value) {
+    return;
+  }
+
   eyesClosed.value = true;
 
   if (shakeTimer) {
@@ -260,6 +283,25 @@ const handleLoginSuccess = () => {
     window.clearTimeout(shakeTimer);
     shakeTimer = undefined;
   }
+  isShaking.value = false;
+};
+
+const handleRegisterRequest = () => {
+  isRegistering.value = true;
+  eyesClosed.value = false;
+  if (shakeTimer) {
+    window.clearTimeout(shakeTimer);
+    shakeTimer = undefined;
+  }
+  isShaking.value = false;
+};
+
+const handleRegisterClose = () => {
+  isRegistering.value = false;
+};
+
+const handleRegisterSuccess = () => {
+  eyesClosed.value = false;
   isShaking.value = false;
 };
 
@@ -411,16 +453,53 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
   position: relative;
   width: min(420px, 90%);
   border-radius: 26px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 18px 45px rgba(22, 31, 64, 0.25);
+  background: transparent;
+  box-shadow: none;
+  perspective: 1600px;
   z-index: 2;
 }
 
-.sign-stage--dark .sign-card {
+.sign-card__inner {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+}
+
+.sign-card__inner--flipped {
+  transform: rotateY(180deg);
+}
+
+.sign-card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 45px rgba(22, 31, 64, 0.25);
+  background: rgba(255, 255, 255, 0.82);
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+.sign-card__face--back {
+  transform: rotateY(180deg);
+}
+
+.sign-card__inner:not(.sign-card__inner--flipped) .sign-card__face--front,
+.sign-card__inner--flipped .sign-card__face--back {
+  pointer-events: auto;
+}
+
+.sign-stage--dark .sign-card__face {
   background: rgba(13, 18, 38, 0.85);
   color: #f1f5ff;
   box-shadow: 0 18px 45px rgba(5, 9, 21, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .signin-node--shake {

@@ -57,6 +57,18 @@
             {{ t('authenticateUser.forgotLink') }}
           </q-btn>
         </div>
+        <div class="auth-register text-body2">
+          <span>{{ t('authenticateUser.notRegistered') }}</span>
+          <q-btn
+            flat
+            dense
+            class="auth-register__link"
+            :disable="isSubmitting || isResetting"
+            @click="handleRegisterClick"
+          >
+            {{ t('authenticateUser.registerCta') }}
+          </q-btn>
+        </div>
       </div>
     </q-form>
   </div>
@@ -71,6 +83,7 @@ import { useUserStore, TOKEN_STORAGE_KEY } from 'src/stores/user-store';
 type EmitEvents = {
   (event: 'login-success'): void;
   (event: 'login-failed'): void;
+  (event: 'register-request'): void;
 };
 
 const emit = defineEmits<EmitEvents>();
@@ -90,6 +103,10 @@ const statusMessageType = ref<'error' | 'success'>('success');
 
 const clearStatusMessage = () => {
   statusMessage.value = '';
+};
+
+const handleRegisterClick = () => {
+  emit('register-request');
 };
 
 const handleSubmit = async () => {
@@ -192,6 +209,21 @@ const handleReset = async () => {
 }
 
 .auth-reset__link {
+  color: inherit;
+  text-decoration: underline;
+  padding: 0;
+  min-height: unset;
+}
+
+.auth-register {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+.auth-register__link {
   color: inherit;
   text-decoration: underline;
   padding: 0;

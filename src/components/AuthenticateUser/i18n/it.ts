@@ -11,5 +11,7 @@ export default {
     resetSuccess: 'Ti abbiamo inviato le istruzioni per reimpostare la password.',
     resetError: 'Non è stato possibile inviare l’email di reset. Riprova più tardi.',
     alreadySignedIn: 'Sei già autenticato.',
+    notRegistered: 'Non sei registrato?',
+    registerCta: 'Iscriviti ora',
   },
 };
