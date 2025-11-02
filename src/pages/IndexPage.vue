@@ -3,6 +3,8 @@
     <div
       ref="stageRef"
       @click="handleStageClick"
+      @mousemove="handleMouseMove"
+      @mouseleave="handleMouseLeave"
       :class="[
         'network-stage',
         isDark ? 'network-stage--dark' : 'network-stage--light'
@@ -71,13 +73,27 @@
         :class="{
           'server-node--alert': activeAlert === server.id,
           'server-node--ack': highlightedServers[server.id],
-          'server-node--spawn': spawnHighlights[server.id]
+          'server-node--spawn': spawnHighlights[server.id],
+          'server-node--shake': shakingServers[server.id]
         }"
         :style="{
           top: `${server.position.y}%`,
           left: `${server.position.x}%`
         }"
+        @mouseenter="handleServerMouseEnter(server.id)"
+        @mouseleave="handleServerMouseLeave(server.id)"
       >
+        <div
+          class="server-node__eyes"
+          :class="{ 'server-node__eyes--happy': happyServers[server.id] }"
+        >
+          <div class="server-eye">
+            <div class="server-eye__pupil" :style="getPupilStyle(server)"></div>
+          </div>
+          <div class="server-eye">
+            <div class="server-eye__pupil" :style="getPupilStyle(server)"></div>
+          </div>
+        </div>
         <q-icon name="dns" size="36px" />
         <transition name="alert-pop">
           <q-icon
@@ -118,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 
@@ -193,6 +209,13 @@ const createBaseNodes = (): ServerNode[] =>
 const stageRef = ref<HTMLElement | null>(null);
 const hubRef = ref<HTMLElement | null>(null);
 const serverNodes = ref<ServerNode[]>(createBaseNodes());
+const hoveredServerId = ref<string | null>(null);
+const happyServers = ref<Record<string, boolean>>({});
+const shakingServers = ref<Record<string, boolean>>({});
+const stageSize = reactive({ width: 1, height: 1 });
+const cursor = reactive({ x: 0, y: 0 });
+const shakeTimeouts = new Map<string, number>();
+const happyTimeouts = new Map<string, number>();
 
 const activeAlert = ref<string | null>(null);
 const buttonHighlighted = ref(false);
@@ -225,6 +248,149 @@ const shuffle = <T>(items: readonly T[]) => {
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+const setServerHappy = (serverId: string, value: boolean) => {
+  if (value) {
+    happyServers.value = {
+      ...happyServers.value,
+      [serverId]: true,
+    };
+    return;
+  }
+
+  if (happyServers.value[serverId]) {
+    const next = { ...happyServers.value };
+    delete next[serverId];
+    happyServers.value = next;
+  }
+};
+
+const setServerShake = (serverId: string, value: boolean) => {
+  if (value) {
+    shakingServers.value = {
+      ...shakingServers.value,
+      [serverId]: true,
+    };
+    return;
+  }
+
+  if (shakingServers.value[serverId]) {
+    const next = { ...shakingServers.value };
+    delete next[serverId];
+    shakingServers.value = next;
+  }
+};
+
+const clearHappyTimeout = (serverId: string) => {
+  const timeout = happyTimeouts.get(serverId);
+  if (timeout !== undefined) {
+    window.clearTimeout(timeout);
+    happyTimeouts.delete(serverId);
+  }
+};
+
+const clearShakeTimeout = (serverId: string) => {
+  const timeout = shakeTimeouts.get(serverId);
+  if (timeout !== undefined) {
+    window.clearTimeout(timeout);
+    shakeTimeouts.delete(serverId);
+  }
+};
+
+const triggerServerHappy = (serverId: string, duration = 1400) => {
+  setServerHappy(serverId, true);
+  clearHappyTimeout(serverId);
+  const timeoutId = window.setTimeout(() => {
+    if (hoveredServerId.value !== serverId) {
+      setServerHappy(serverId, false);
+    }
+    happyTimeouts.delete(serverId);
+  }, duration);
+  happyTimeouts.set(serverId, timeoutId);
+};
+
+const triggerServerShake = (serverId: string, duration = 1000) => {
+  setServerShake(serverId, true);
+  clearShakeTimeout(serverId);
+  const timeoutId = window.setTimeout(() => {
+    if (hoveredServerId.value !== serverId) {
+      setServerShake(serverId, false);
+    }
+    shakeTimeouts.delete(serverId);
+  }, duration);
+  shakeTimeouts.set(serverId, timeoutId);
+};
+
+const handleServerMouseEnter = (serverId: string) => {
+  hoveredServerId.value = serverId;
+  clearHappyTimeout(serverId);
+  clearShakeTimeout(serverId);
+  setServerHappy(serverId, true);
+  setServerShake(serverId, true);
+};
+
+const handleServerMouseLeave = (serverId: string) => {
+  if (hoveredServerId.value === serverId) {
+    hoveredServerId.value = null;
+  }
+
+  if (!happyTimeouts.has(serverId)) {
+    setServerHappy(serverId, false);
+  }
+
+  if (!shakeTimeouts.has(serverId)) {
+    setServerShake(serverId, false);
+  }
+};
+
+const updateStageMetrics = () => {
+  const stageEl = stageRef.value;
+  if (!stageEl) {
+    return;
+  }
+  const rect = stageEl.getBoundingClientRect();
+  stageSize.width = rect.width;
+  stageSize.height = rect.height;
+};
+
+const handleMouseMove = (event: MouseEvent) => {
+  const stageEl = stageRef.value;
+  if (!stageEl) {
+    return;
+  }
+
+  const rect = stageEl.getBoundingClientRect();
+  cursor.x = event.clientX - rect.left;
+  cursor.y = event.clientY - rect.top;
+};
+
+const handleMouseLeave = () => {
+  cursor.x = stageSize.width / 2;
+  cursor.y = stageSize.height / 2;
+};
+
+const getPupilStyle = (server: ServerNode) => {
+  const stageEl = stageRef.value;
+  if (!stageEl) {
+    return {};
+  }
+
+  const nodeX = (server.position.x / 100) * stageSize.width;
+  const nodeY = (server.position.y / 100) * stageSize.height;
+
+  const dx = cursor.x - nodeX;
+  const dy = cursor.y - nodeY;
+  const distance = Math.hypot(dx, dy);
+  const maxOffset = 6;
+  const ratio = distance === 0 ? 0 : Math.min(distance / 90, 1);
+
+  const offsetX = Math.cos(Math.atan2(dy, dx)) * maxOffset * ratio;
+  const offsetY = Math.sin(Math.atan2(dy, dx)) * maxOffset * ratio;
+
+  return {
+    transform: `translate(${offsetX}px, ${offsetY}px)`
+  };
+};
+
 const resetHighlights = () => {
   const initial: Record<string, boolean> = {};
   serverNodes.value.forEach((server) => {
@@ -237,6 +403,25 @@ watch(
   serverNodes,
   () => {
     resetHighlights();
+    const ids = new Set(serverNodes.value.map((node) => node.id));
+    happyServers.value = Object.fromEntries(
+      Object.entries(happyServers.value).filter(([id]) => ids.has(id))
+    );
+    shakingServers.value = Object.fromEntries(
+      Object.entries(shakingServers.value).filter(([id]) => ids.has(id))
+    );
+    shakeTimeouts.forEach((timeoutId, id) => {
+      if (!ids.has(id)) {
+        window.clearTimeout(timeoutId);
+        shakeTimeouts.delete(id);
+      }
+    });
+    happyTimeouts.forEach((timeoutId, id) => {
+      if (!ids.has(id)) {
+        window.clearTimeout(timeoutId);
+        happyTimeouts.delete(id);
+      }
+    });
   },
   { deep: true },
 );
@@ -261,6 +446,16 @@ watch(
   () => {
     updateBaseNodePositions();
     resetHighlights();
+  },
+);
+
+watch(
+  () => stageRef.value,
+  () => {
+    void nextTick(() => {
+      updateStageMetrics();
+      handleMouseLeave();
+    });
   },
 );
 
@@ -384,6 +579,9 @@ const addRewardPopup = (server: ServerNode) => {
       y: Math.max(8, server.position.y - 10),
     },
   });
+
+  triggerServerHappy(server.id, 1600);
+  triggerServerShake(server.id, 1200);
 
   window.setTimeout(() => {
     rewardPopups.value = rewardPopups.value.filter((reward) => reward.id !== rewardId);
@@ -560,16 +758,26 @@ onMounted(() => {
   initializeConsumptions();
   addBlock();
   void triggerAlert();
+  void nextTick(() => {
+    updateStageMetrics();
+    handleMouseLeave();
+  });
+  window.addEventListener('resize', updateStageMetrics);
   alertTimer = window.setInterval(() => {
     void triggerAlert();
   }, 6500);
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateStageMetrics);
   if (alertTimer !== undefined) {
     window.clearInterval(alertTimer);
     alertTimer = undefined;
   }
+  shakeTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+  shakeTimeouts.clear();
+  happyTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+  happyTimeouts.clear();
 });
 </script>
 
@@ -620,6 +828,10 @@ onBeforeUnmount(() => {
   color: #e7ecff;
 }
 
+.server-node--shake {
+  animation: server-node-shake 0.75s ease;
+}
+
 .network-stage--light .server-node {
   background: rgba(255, 255, 255, 0.65);
   color: #1b244a;
@@ -628,6 +840,77 @@ onBeforeUnmount(() => {
 
 .network-stage--dark .server-node {
   border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.server-node__eyes {
+  position: absolute;
+  top: -6px;
+  display: flex;
+  gap: 10px;
+  transform: translateY(-2px);
+}
+
+.server-eye {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.network-stage--dark .server-eye {
+  background: rgba(240, 246, 255, 0.92);
+  border-color: rgba(226, 232, 240, 0.85);
+}
+
+.server-eye__pupil {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0f172a;
+  transition: transform 0.12s ease;
+}
+
+.network-stage--dark .server-eye__pupil {
+  background: #0f172a;
+}
+
+.server-node__eyes--happy .server-eye {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.6);
+}
+
+.server-node__eyes--happy .server-eye__pupil {
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.server-node__eyes--happy .server-eye__pupil::before {
+  content: '^';
+  transform: translateY(-1px);
+}
+
+.network-stage--dark .server-node__eyes--happy .server-eye {
+  background: rgba(240, 246, 255, 0.96);
+  border-color: rgba(148, 163, 184, 0.55);
+}
+
+.network-stage--dark .server-node__eyes--happy .server-eye__pupil {
+  background: rgba(13, 17, 38, 0.95);
+  color: #e2e8f0;
 }
 
 .server-node--alert {
@@ -714,6 +997,25 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.85);
   color: #14213d;
   box-shadow: 0 6px 12px rgba(23, 33, 60, 0.2);
+}
+
+@keyframes server-node-shake {
+  0%,
+  100% {
+    transform: rotate(0deg) translate3d(0, 0, 0);
+  }
+  20% {
+    transform: rotate(-6deg) translate3d(-2px, 0, 0);
+  }
+  40% {
+    transform: rotate(5deg) translate3d(2px, 0, 0);
+  }
+  60% {
+    transform: rotate(-4deg) translate3d(-1px, 0, 0);
+  }
+  80% {
+    transform: rotate(3deg) translate3d(1px, 0, 0);
+  }
 }
 
 @keyframes node-spawn-ring {

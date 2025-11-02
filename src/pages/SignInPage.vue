@@ -13,14 +13,22 @@
         :class="[
           'signin-node',
           { 'signin-node--dynamic': node.kind === 'dynamic' },
-          isShaking ? 'signin-node--shake' : null
+          (isShaking || hoveredNode === node.id) ? 'signin-node--shake' : null
         ]"
         :style="{
           top: `${node.position.y}%`,
           left: `${node.position.x}%`
         }"
+        @mouseenter="handleNodeMouseEnter(node.id)"
+        @mouseleave="handleNodeMouseLeave(node.id)"
       >
-        <div class="node-eyes" :class="{ 'node-eyes--closed': eyesClosed }">
+        <div
+          class="node-eyes"
+          :class="{
+            'node-eyes--closed': eyesClosed,
+            'node-eyes--happy': happyNodes[node.id]
+          }"
+        >
           <div class="node-eye">
             <div class="node-eye__pupil" :style="getPupilStyle(node)"></div>
           </div>
@@ -157,9 +165,12 @@ const createBaseNodes = (): ServerNode[] =>
 
 const serverNodes = ref<ServerNode[]>(createBaseNodes());
 const eyesClosed = ref(false);
+const happyNodes = ref<Record<string, boolean>>({});
 const isShaking = ref(false);
 const isRegistering = ref(false);
 const authPopups = ref<AuthPopup[]>([]);
+const hoveredNode = ref<string | null>(null);
+const isGlobalHappy = ref(false);
 
 const cursor = reactive({
   x: 0,
@@ -175,8 +186,65 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 let shakeTimer: number | undefined;
 let eyesTimer: number | undefined;
+let happyTimer: number | undefined;
+
+const setHappyNode = (nodeId: string, value: boolean) => {
+  if (value) {
+    happyNodes.value = {
+      ...happyNodes.value,
+      [nodeId]: true,
+    };
+    return;
+  }
+
+  if (happyNodes.value[nodeId]) {
+    const next = { ...happyNodes.value };
+    delete next[nodeId];
+    happyNodes.value = next;
+  }
+};
+
+const clearHappyNodes = () => {
+  happyNodes.value = {};
+};
+
+const triggerHappyEyes = (duration = 1600) => {
+  if (eyesTimer) {
+    window.clearTimeout(eyesTimer);
+    eyesTimer = undefined;
+  }
+
+  if (happyTimer) {
+    window.clearTimeout(happyTimer);
+  }
+
+  eyesClosed.value = false;
+  isGlobalHappy.value = true;
+
+  const state: Record<string, boolean> = {};
+  serverNodes.value.forEach((node) => {
+    state[node.id] = true;
+  });
+  happyNodes.value = state;
+
+  happyTimer = window.setTimeout(() => {
+    isGlobalHappy.value = false;
+    clearHappyNodes();
+    happyTimer = undefined;
+    if (hoveredNode.value) {
+      setHappyNode(hoveredNode.value, true);
+    }
+  }, duration);
+};
 
 const triggerEyesClosure = () => {
+  if (happyTimer) {
+    window.clearTimeout(happyTimer);
+    happyTimer = undefined;
+  }
+  isGlobalHappy.value = false;
+  clearHappyNodes();
+
   eyesClosed.value = true;
 
   if (eyesTimer) {
@@ -186,6 +254,9 @@ const triggerEyesClosure = () => {
   eyesTimer = window.setTimeout(() => {
     eyesClosed.value = false;
     eyesTimer = undefined;
+    if (hoveredNode.value) {
+      setHappyNode(hoveredNode.value, true);
+    }
   }, 1200);
 };
 
@@ -257,6 +328,20 @@ watch(
   },
 );
 
+watch(
+  serverNodes,
+  (nodes) => {
+    if (isGlobalHappy.value) {
+      const state: Record<string, boolean> = {};
+      nodes.forEach((node) => {
+        state[node.id] = true;
+      });
+      happyNodes.value = state;
+    }
+  },
+  { deep: true },
+);
+
 const updateStageMetrics = () => {
   const stageEl = stageRef.value;
   if (!stageEl) {
@@ -324,6 +409,10 @@ const addServerNodeAt = (position: { x: number; y: number }) => {
       kind: 'dynamic',
     },
   ];
+
+  if (isGlobalHappy.value) {
+    setHappyNode(id, true);
+  }
 };
 
 const handleStageClick = (event: MouseEvent) => {
@@ -373,6 +462,7 @@ const handleLoginSuccess = () => {
   }
   isShaking.value = false;
   addAuthPopup('success');
+  triggerHappyEyes();
 };
 
 const handleRegisterRequest = () => {
@@ -393,12 +483,28 @@ const handleRegisterSuccess = () => {
   eyesClosed.value = false;
   isShaking.value = false;
   addAuthPopup('success');
+  triggerHappyEyes();
 };
 
 const handleRegisterFailure = () => {
   addAuthPopup('error');
   triggerEyesClosure();
   triggerNodeShake();
+};
+
+const handleNodeMouseEnter = (nodeId: string) => {
+  hoveredNode.value = nodeId;
+  setHappyNode(nodeId, true);
+};
+
+const handleNodeMouseLeave = (nodeId: string) => {
+  if (hoveredNode.value === nodeId) {
+    hoveredNode.value = null;
+  }
+
+  if (!isGlobalHappy.value) {
+    setHappyNode(nodeId, false);
+  }
 };
 onMounted(() => {
   void nextTick(() => {
@@ -415,6 +521,9 @@ onBeforeUnmount(() => {
   }
   if (eyesTimer) {
     window.clearTimeout(eyesTimer);
+  }
+  if (happyTimer) {
+    window.clearTimeout(happyTimer);
   }
 });
 
@@ -622,6 +731,39 @@ const themeClass = computed(() => ( $q.dark.isActive ? 'sign-stage--dark' : 'sig
 
 .sign-stage--dark .node-eyes--closed .node-eye::after {
   background: rgba(15, 23, 42, 0.92);
+}
+
+.node-eyes--happy .node-eye {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.6);
+}
+
+.node-eyes--happy .node-eye__pupil {
+  width: 10px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.node-eyes--happy .node-eye__pupil::before {
+  content: '^';
+  transform: translateY(-1px);
+}
+
+.sign-stage--dark .node-eyes--happy .node-eye {
+  background: rgba(240, 246, 255, 0.96);
+  border-color: rgba(148, 163, 184, 0.55);
+}
+
+.sign-stage--dark .node-eyes--happy .node-eye__pupil {
+  background: rgba(13, 17, 38, 0.95);
+  color: #e2e8f0;
 }
 
 .sign-card {
