@@ -35,7 +35,19 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: "",
+        name: "sign-in",
         component: () => import("pages/SignInPage.vue"),
+      },
+    ],
+  },
+  {
+    path: "/verify",
+    component: () => import("layouts/MainLayout.vue"),
+    children: [
+      {
+        path: "",
+        name: "verify",
+        component: () => import("pages/VerifyPage.vue"),
       },
     ],
   },
