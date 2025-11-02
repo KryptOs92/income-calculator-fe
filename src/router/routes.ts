@@ -18,6 +18,18 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: "/overview",
+    component: () => import("layouts/MainLayout.vue"),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "overview",
+        component: () => import("pages/OverviewPage.vue"),
+      },
+    ],
+  },
+  {
     path: "/sign-in",
     component: () => import("layouts/MainLayout.vue"),
     children: [

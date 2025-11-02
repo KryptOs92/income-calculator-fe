@@ -109,6 +109,7 @@
           :class="{ 'network-hub__button--alert': buttonHighlighted }"
           unelevated
           size="md"
+          :to="{ name: 'overview' }"
           :label="t('indexPage.cta')"
         />
       </q-card>

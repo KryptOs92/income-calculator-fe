@@ -53,7 +53,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       return;
     }
 
-    next('/');
+    next('/sign-in');
   });
 
   return Router;
