@@ -1,5 +1,15 @@
 <template>
   <q-page class="wallets-page q-pa-xl">
+    <div class="wallet-search q-mb-xl">
+      <q-input
+        v-model="searchTerm"
+        outlined
+        dense
+        :label="t('walletsPage.search.label')"
+        :placeholder="t('walletsPage.search.placeholder')"
+      />
+    </div>
+
     <div class="wallet-map">
       <div
         v-for="node in decoratedNodes"
@@ -16,21 +26,12 @@
         <span v-if="!node.ready" class="wallet-node__status">work in progress..</span>
       </div>
     </div>
-
-    <div class="wallet-search q-mt-xl">
-      <q-input
-        v-model="searchTerm"
-        outlined
-        dense
-        label="Cerca una crypto"
-        placeholder="Es. Cardano"
-      />
-    </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import algorandLogo from 'src/assets/logos/algorand-algo-logo.png'
 import cardanoLogo from 'src/assets/logos/cardano-ada-logo.png'
 
@@ -40,6 +41,8 @@ type WalletNode = {
   logo: string
   ready: boolean
 }
+
+const { t } = useI18n()
 
 const baseNodes: WalletNode[] = [
   {
