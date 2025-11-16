@@ -1,5 +1,21 @@
 <template>
   <q-page class="wallets-page q-pa-xl">
+    <div class="wallet-steps q-mb-xl">
+      <div class="wallet-step" v-for="step in steps" :key="step.id">
+        <div class="wallet-step__badge">
+          <span>{{ step.id }}</span>
+        </div>
+        <div class="wallet-step__body">
+          <p class="wallet-step__title">
+            {{ step.title }}
+          </p>
+          <p class="wallet-step__description">
+            {{ step.description }}
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div class="wallet-search q-mb-xl">
       <q-input
         v-model="searchTerm"
@@ -70,9 +86,72 @@ const decoratedNodes = computed(() =>
       node.label.toLowerCase().includes(normalizedSearch.value),
   }))
 )
+
+const steps = computed(() => [
+  {
+    id: 1,
+    title: t('walletsPage.steps.select.title'),
+    description: t('walletsPage.steps.select.description'),
+  },
+  {
+    id: 2,
+    title: t('walletsPage.steps.address.title'),
+    description: t('walletsPage.steps.address.description'),
+  },
+  {
+    id: 3,
+    title: t('walletsPage.steps.assign.title'),
+    description: t('walletsPage.steps.assign.description'),
+  },
+])
 </script>
 
 <style scoped>
+.wallet-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.wallet-step {
+  flex: 1 1 240px;
+  display: flex;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(111, 63, 245, 0.1), rgba(111, 63, 245, 0.02));
+  border: 1px solid rgba(111, 63, 245, 0.2);
+}
+
+.wallet-step__badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6f3ff5;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(111, 63, 245, 0.35);
+}
+
+.wallet-step__title {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.wallet-step__description {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+:global(body.body--light) .wallet-step {
+  background: linear-gradient(135deg, rgba(111, 63, 245, 0.14), rgba(111, 63, 245, 0.04));
+  border-color: rgba(111, 63, 245, 0.3);
+}
+
 .wallet-map {
   display: flex;
   flex-wrap: wrap;
