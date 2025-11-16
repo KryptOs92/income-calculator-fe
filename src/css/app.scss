@@ -29,8 +29,15 @@ body.body--light {
   }
   aside {
     border-right: solid 1px;
-    border-right-color: rgba(111, 63, 245, 0.85);
+    border-right-color: $light-primary;
     box-shadow: 0 8px 22px rgba(111, 63, 245, 0.25), 0 0 12px rgba(111, 63, 245, 0.25);
+    .q-router-link--active{
+      color: $light-primary;
+      font-weight: bold;
+      .q-icon{
+        color: $light-primary;
+      }
+    }
   }
       
 }
