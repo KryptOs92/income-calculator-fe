@@ -16,38 +16,58 @@
       </div>
     </div>
 
-    <div class="wallet-search q-mb-xl">
-      <q-input
-        v-model="searchTerm"
-        outlined
-        dense
-        :label="t('walletsPage.search.label')"
-        :placeholder="t('walletsPage.search.placeholder')"
-      />
+    <div v-if="shouldShowError" class="wallet-error q-mt-xl">
+      <q-banner dense rounded class="bg-negative text-white text-center">
+        {{ t('walletsPage.error') }}
+      </q-banner>
     </div>
 
-    <div class="wallet-map">
-      <div
-        v-for="node in decoratedNodes"
-        :key="node.id"
-        class="wallet-node"
-        :class="{
-          'wallet-node--ready': node.ready,
-          'wallet-node--inactive': !node.ready,
-          'wallet-node--blink': node.matchesSearch,
-        }"
-      >
-        <img :src="node.logo" :alt="node.label" class="wallet-node__logo" />
-        <span class="wallet-node__label">{{ node.label }}</span>
-        <span v-if="!node.ready" class="wallet-node__status">work in progress..</span>
+    <template v-else>
+      <div class="wallet-search q-mb-xl">
+        <q-input
+          v-model="searchTerm"
+          outlined
+          dense
+          :label="t('walletsPage.search.label')"
+          :placeholder="t('walletsPage.search.placeholder')"
+        />
       </div>
-    </div>
+
+      <div class="wallet-map">
+        <template v-if="visibleNodes.length">
+          <div
+            v-for="node in visibleNodes"
+            :key="node.id"
+            class="wallet-node"
+            :class="{
+              'wallet-node--ready': node.isReady,
+              'wallet-node--inactive': !node.isReady,
+              'wallet-node--blink': node.matchesSearch,
+            }"
+          >
+            <img :src="node.logo" :alt="node.label" class="wallet-node__logo" />
+            <span class="wallet-node__label">{{ node.label }}</span>
+            <span v-if="!node.isReady" class="wallet-node__status">work in progress..</span>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="wallet-map__empty column items-center justify-center q-pa-xl">
+            <q-spinner v-if="isLoading" size="42px" color="primary" />
+            <p v-else class="wallet-map__empty-text">
+              {{ t('walletsPage.search.noResults') }}
+            </p>
+          </div>
+        </template>
+      </div>
+    </template>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { api } from 'src/boot/axios'
 import algorandLogo from 'src/assets/logos/algorand-algo-logo.png'
 import cardanoLogo from 'src/assets/logos/cardano-ada-logo.png'
 
@@ -55,37 +75,115 @@ type WalletNode = {
   id: string
   label: string
   logo: string
-  ready: boolean
+  isReady: boolean
+  matchesSearch?: boolean
 }
 
 const { t } = useI18n()
 
-const baseNodes: WalletNode[] = [
-  {
-    id: 'algorand',
-    label: 'Algorand (ALGO)',
-    logo: algorandLogo,
-    ready: true,
-  },
-  {
-    id: 'cardano',
-    label: 'Cardano (ADA)',
-    logo: cardanoLogo,
-    ready: false,
-  },
-]
-
 const searchTerm = ref('')
+const nodes = ref<WalletNode[]>([])
+const isLoading = ref(false)
+const hasError = ref(false)
+
+const availableLogos: Record<string, string> = {
+  AlgorandLogo: algorandLogo,
+  CardanoLogo: cardanoLogo,
+}
+const defaultLogo = cardanoLogo
+
+const fetchCryptos = async () => {
+  isLoading.value = true
+  hasError.value = false
+
+  try {
+    const response = await api.get('/cryptos')
+    const list = normalizePayload(response?.data)
+
+    if (!list.length) {
+      nodes.value = []
+      hasError.value = true
+      return
+    }
+
+    nodes.value = list.map((crypto, index) => toWalletNode(crypto, index))
+  } catch {
+    nodes.value = []
+    hasError.value = true
+  } finally {
+    isLoading.value = false
+  }
+}
+
+type CryptoApiEntry = {
+  name?: string
+  symbol?: string
+  isReady?: boolean
+  logo?: string
+  [key: string]: unknown
+}
+
+const normalizePayload = (payload: unknown): CryptoApiEntry[] => {
+  if (Array.isArray(payload)) {
+    return payload as CryptoApiEntry[]
+  }
+
+  if (payload && typeof payload === 'object') {
+    const bag = payload as Record<string, unknown>
+    if (Array.isArray(bag.cryptos)) {
+      return bag.cryptos as CryptoApiEntry[]
+    }
+    if (Array.isArray(bag.data)) {
+      return bag.data as CryptoApiEntry[]
+    }
+  }
+
+  return []
+}
+
+const toWalletNode = (entry: CryptoApiEntry, index: number): WalletNode => {
+  const baseName =
+    typeof entry.name === 'string' && entry.name.length ? entry.name : `Crypto ${index + 1}`
+  const symbol =
+    typeof entry.symbol === 'string' && entry.symbol.length ? entry.symbol.toUpperCase() : ''
+  const label = symbol ? `${baseName} (${symbol})` : baseName
+
+  const sanitizedKey = baseName.replace(/\s+/g, '')
+  const keyCandidates = [`${baseName}Logo`, `${sanitizedKey}Logo`]
+  const explicitLogo =
+    typeof entry.logo === 'string' && entry.logo.length ? entry.logo : undefined
+  const derivedLogo =
+    keyCandidates.map((key) => availableLogos[key]).find((value) => typeof value === 'string') ??
+    explicitLogo ??
+    defaultLogo
+
+  return {
+    id: `${sanitizedKey || 'crypto'}-${symbol || index}`,
+    label,
+    logo: derivedLogo,
+    isReady: Boolean(entry.isReady),
+  }
+}
+
 const normalizedSearch = computed(() => searchTerm.value.trim().toLowerCase())
 
 const decoratedNodes = computed(() =>
-  baseNodes.map((node) => ({
+  nodes.value.map((node) => ({
     ...node,
     matchesSearch:
       normalizedSearch.value.length > 0 &&
       node.label.toLowerCase().includes(normalizedSearch.value),
   }))
 )
+
+const visibleNodes = computed(() => {
+  if (!normalizedSearch.value.length) {
+    return decoratedNodes.value
+  }
+  return decoratedNodes.value.filter((node) => node.matchesSearch)
+})
+
+const shouldShowError = computed(() => !isLoading.value && hasError.value)
 
 const steps = computed(() => [
   {
@@ -104,6 +202,10 @@ const steps = computed(() => [
     description: t('walletsPage.steps.assign.description'),
   },
 ])
+
+onMounted(() => {
+  void fetchCryptos()
+})
 </script>
 
 <style scoped>
@@ -213,6 +315,12 @@ const steps = computed(() => [
 
 .wallet-search {
   max-width: 320px;
+}
+
+.wallet-map__empty-text {
+  margin: 0;
+  color: #cdd7f5;
+  font-weight: 600;
 }
 
 @keyframes wallet-blink {

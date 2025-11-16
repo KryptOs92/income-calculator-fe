@@ -1,9 +1,11 @@
 export default {
   walletsPage: {
     search: {
-      label: 'Search a blockchain…',
-      placeholder: 'Search a blockchain…',
+      label: 'Search a blockchain...',
+      placeholder: 'Search a blockchain...',
+      noResults: 'No blockchain matches your search.',
     },
+    error: 'Error while loading... please try again later.',
     steps: {
       select: {
         title: 'Select a blockchain',
@@ -15,7 +17,8 @@ export default {
       },
       assign: {
         title: 'Assign a server to each address',
-        description: 'Link every wallet to the node that will run mining or staking for it.',
+        description:
+          'Link every wallet to the node that will run mining or staking for it.',
       },
     },
   },
