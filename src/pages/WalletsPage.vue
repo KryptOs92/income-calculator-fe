@@ -218,15 +218,15 @@ const steps = computed(() => [
 @keyframes wallet-blink {
   0% {
     opacity: 0.4;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0));
+    filter: drop-shadow(0 0 8px rgba(111, 63, 245, 0));
   }
   50% {
     opacity: 1;
-    filter: drop-shadow(0 0 16px rgba(255, 236, 182, 0.9));
+    filter: drop-shadow(0 0 20px rgba(111, 63, 245, 0.85));
   }
   100% {
     opacity: 0.4;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0));
+    filter: drop-shadow(0 0 8px rgba(111, 63, 245, 0));
   }
 }
 
