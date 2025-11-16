@@ -3,6 +3,7 @@
 $light-primary: #6f3ff5;
 
 body.body--light {
+  opacity: unset!important;
   .bg-primary {
     background-color: $light-primary !important;
   }
@@ -26,4 +27,10 @@ body.body--light {
   .q-btn.q-btn--flat.text-primary {
     color: $light-primary;
   }
+  aside {
+    border-right: solid 1px;
+    border-right-color: rgba(111, 63, 245, 0.85);
+    box-shadow: 0 8px 22px rgba(111, 63, 245, 0.25), 0 0 12px rgba(111, 63, 245, 0.25);
+  }
+      
 }
