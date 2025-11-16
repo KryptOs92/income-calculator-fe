@@ -1,1 +1,29 @@
 // app global css in SCSS form
+
+$light-primary: #6f3ff5;
+
+body.body--light {
+  .bg-primary {
+    background-color: $light-primary !important;
+  }
+
+  .text-primary {
+    color: $light-primary !important;
+  }
+
+  .q-btn.bg-primary {
+    color: #fff;
+    box-shadow:
+      0 8px 18px rgba(111, 63, 245, 0.35),
+      0 0 10px rgba(111, 63, 245, 0.25);
+  }
+
+  .q-btn.q-btn--outline.text-primary {
+    border-color: rgba(111, 63, 245, 0.75);
+    color: $light-primary;
+  }
+
+  .q-btn.q-btn--flat.text-primary {
+    color: $light-primary;
+  }
+}

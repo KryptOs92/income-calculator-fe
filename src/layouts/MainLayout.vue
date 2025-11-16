@@ -19,7 +19,10 @@
 
         <q-toolbar-title>
           <q-avatar>
-            <img src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg">
+            <img
+              :class="['main-logo', { 'main-logo--light': !isDark }]"
+              src="https://cdn.quasar.dev/logo-v2/svg/logo-mono-white.svg"
+            >
           </q-avatar>
           Title
         </q-toolbar-title>
@@ -224,7 +227,10 @@ onMounted(async () => {
 .main-header--light {
   background: #ffffff;
   color: #111827;
-  border-bottom-color: #6f3ff5;
+  border-bottom-color: rgba(111, 63, 245, 0.85);
+  box-shadow:
+    0 8px 22px rgba(111, 63, 245, 0.25),
+    0 0 12px rgba(111, 63, 245, 0.25);
 }
 
 .main-header--light .q-toolbar,
@@ -244,6 +250,11 @@ onMounted(async () => {
 
 .main-drawer__scroll {
   flex: 1;
+}
+
+.main-logo--light {
+  filter: brightness(0) saturate(100%) invert(13%) sepia(63%) saturate(6699%)
+    hue-rotate(261deg) brightness(93%) contrast(92%);
 }
 
 .main-drawer--light {
