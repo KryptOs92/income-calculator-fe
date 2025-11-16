@@ -32,14 +32,14 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
-  Router.beforeEach((to, from, next) => {
+  Router.beforeEach(async (to, from, next) => {
     if (typeof window === 'undefined') {
       next();
       return;
     }
 
     const userStore = useUserStore();
-    userStore.evaluateToken();
+    await userStore.evaluateToken();
 
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 

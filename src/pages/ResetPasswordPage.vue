@@ -163,6 +163,13 @@
               :loading="submitting"
               :label="t('resetPasswordPage.submit')"
             />
+            <q-btn
+              outline
+              color="positive"
+              class="reset-card__back-btn"
+              :label="t('resetPasswordPage.backToSignIn')"
+              :to="{ name: 'sign-in' }"
+            />
           </q-form>
         </template>
       </q-card>
@@ -830,6 +837,16 @@ onBeforeUnmount(() => {
 .reset-card__message {
   margin: 0;
   line-height: 1.5;
+}
+
+.reset-card__back-btn {
+  width: 100%;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.reset-card__back-btn :deep(.q-btn__content) {
+  gap: 6px;
 }
 
 .reset-card__banner {

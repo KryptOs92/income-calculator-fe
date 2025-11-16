@@ -1,4 +1,4 @@
-export default {
+﻿export default {
   indexPage: {
     cta: 'Discover how your validators are performing',
     aboutButton: 'What is this?',
@@ -22,6 +22,7 @@ export default {
       },
     },
     aboutSummaryTitle: 'Why keep everything in one place?',
-    aboutSummaryBody: 'The dashboard highlights costs and earnings across time ranges, comparing the market value today with the value at the time rewards were minted—providing quick cost/revenue insights that support tax considerations in many countries.',
+    aboutSummaryBody: 'The dashboard gives you a concise overview of expenses and earnings coming from all your validator nodes, helping you quickly understand profitability across different time ranges.',
   },
 };
+

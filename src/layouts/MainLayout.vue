@@ -176,8 +176,8 @@ watch(locale, (newLocale) => {
   }
 });
 
-onMounted(() => {
-  userStore.evaluateToken();
+onMounted(async () => {
+  await userStore.evaluateToken();
 
   if (typeof window === 'undefined') {
     return;

@@ -21,7 +21,12 @@ declare module "vue" {
 // good idea to move this instance creation inside of the
 // "export default () => {}" function below (which runs individually
 // for each client)
-const api = axios.create({ baseURL: API_BASE_URL });
+axios.defaults.withCredentials = true;
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
 
 const applyAuthToken = (config: InternalAxiosRequestConfig) => {
   if (typeof window === "undefined") {

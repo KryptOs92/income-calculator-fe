@@ -1,7 +1,7 @@
 import { defineBoot } from '#q-app/wrappers';
 import { useUserStore } from 'src/stores/user-store';
 
-export default defineBoot(() => {
+export default defineBoot(async () => {
   const userStore = useUserStore();
-  userStore.evaluateToken();
+  await userStore.evaluateToken();
 });

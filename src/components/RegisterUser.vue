@@ -43,22 +43,38 @@
       />
       <q-input
         v-model="form.password"
-        type="password"
+        :type="showPassword ? 'text' : 'password'"
         :label="t('registerUser.passwordLabel')"
         dense
         outlined
         :disable="isSubmitting"
         :maxlength="PASSWORD_MAX_LENGTH"
-      />
+      >
+        <template #append>
+          <q-icon
+            :name="showPassword ? 'visibility_off' : 'visibility'"
+            :class="['cursor-pointer', isSubmitting ? 'text-grey-5' : null]"
+            @click="togglePasswordVisibility('password')"
+          />
+        </template>
+      </q-input>
       <q-input
         v-model="form.confirmPassword"
-        type="password"
+        :type="showConfirmPassword ? 'text' : 'password'"
         :label="t('registerUser.confirmPasswordLabel')"
         dense
         outlined
         :disable="isSubmitting"
         :maxlength="PASSWORD_MAX_LENGTH"
-      />
+      >
+        <template #append>
+          <q-icon
+            :name="showConfirmPassword ? 'visibility_off' : 'visibility'"
+            :class="['cursor-pointer', isSubmitting ? 'text-grey-5' : null]"
+            @click="togglePasswordVisibility('confirm')"
+          />
+        </template>
+      </q-input>
 
       <div class="register-messages column">
         <transition name="auth-message">
@@ -124,6 +140,8 @@ const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const statusMessage = ref('');
 const statusMessageType = ref<'error' | 'success'>('success');
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const clearStatusMessage = () => {
   statusMessage.value = '';
@@ -135,11 +153,26 @@ const setErrorMessage = (key: string) => {
   emit('failure');
 };
 
+const togglePasswordVisibility = (target: 'password' | 'confirm') => {
+  if (isSubmitting.value) {
+    return;
+  }
+
+  if (target === 'password') {
+    showPassword.value = !showPassword.value;
+    return;
+  }
+
+  showConfirmPassword.value = !showConfirmPassword.value;
+};
+
 const resetForm = () => {
   form.name = '';
   form.email = '';
   form.password = '';
   form.confirmPassword = '';
+  showPassword.value = false;
+  showConfirmPassword.value = false;
 };
 
 const handleBackToLogin = () => {
@@ -246,6 +279,19 @@ const handleSubmit = async () => {
 
 .register-form {
   width: 100%;
+}
+
+.register-form :deep(.q-field__label) {
+  font-size: 1rem;
+}
+
+.register-form :deep(.q-field__native) {
+  font-size: 1.05rem;
+}
+
+.register-form :deep(.q-field__control) {
+  min-height: 46px;
+  font-size: 1.05rem;
 }
 
 .register-actions {

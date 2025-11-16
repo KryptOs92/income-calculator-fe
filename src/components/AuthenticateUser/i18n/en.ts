@@ -2,6 +2,7 @@ export default {
   authenticateUser: {
     emailLabel: 'Email',
     passwordLabel: 'Password',
+    rememberMe: 'Remember me',
     signIn: 'Sign in',
     forgotPrompt: 'Forgot your password?',
     forgotLink: 'Reset it here!',

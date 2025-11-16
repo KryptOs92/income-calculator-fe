@@ -7,6 +7,7 @@ export default {
     submit: 'Reset password',
     backToHome: 'Back to home',
     goToSignIn: 'Go to sign in',
+    backToSignIn: 'Back to login',
     successTitle: 'Password updated!',
     successMessage: 'Your password has been reset successfully. You can now sign in with the new credentials.',
     fieldRequired: 'This field is required.',

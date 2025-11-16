@@ -1,13 +1,13 @@
 export default {
   registerUser: {
-    nameLabel: 'Full name',
+    nameLabel: 'Username',
     emailLabel: 'Email',
     passwordLabel: 'Password',
     confirmPasswordLabel: 'Confirm password',
     submitLabel: 'Register',
     backToLogin: 'Back to sign in',
-    nameRequired: 'Please enter your name.',
-    nameTooLong: 'Your name cannot exceed 100 characters.',
+    nameRequired: 'Please enter your username.',
+    nameTooLong: 'Your username cannot exceed 100 characters.',
     emailRequired: 'Please enter your email.',
     emailTooLong: 'Email cannot exceed 255 characters.',
     emailInvalid: 'Please enter a valid email address.',

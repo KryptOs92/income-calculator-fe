@@ -7,6 +7,7 @@ export default {
     submit: 'Reimposta password',
     backToHome: 'Torna alla pagina iniziale',
     goToSignIn: 'Vai al log-in',
+    backToSignIn: 'Torna alla login',
     successTitle: 'Password aggiornata!',
     successMessage: 'La tua password è stata reimpostata correttamente. Ora puoi accedere con le nuove credenziali.',
     fieldRequired: 'Questo campo è obbligatorio.',

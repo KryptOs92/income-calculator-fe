@@ -36,6 +36,13 @@
         </template>
       </q-input>
 
+      <q-checkbox
+        v-model="form.rememberMe"
+        :label="t('authenticateUser.rememberMe')"
+        dense
+        :disable="isSubmitting"
+      />
+
       <div class="auth-messages column">
         <transition name="auth-message">
           <div v-if="statusMessage" :class="['auth-message', statusMessageType]">
@@ -55,16 +62,16 @@
         />
         <div class="auth-reset text-body2">
           <span>{{ t('authenticateUser.forgotPrompt') }}</span>
-          <q-btn
-            flat
-            dense
-            class="auth-reset__link"
-            :disable="isSubmitting || isResetting"
-            @click="handleReset"
-          >
-            {{ t('authenticateUser.forgotLink') }}
-          </q-btn>
-        </div>
+        <q-btn
+          flat
+          dense
+          class="auth-reset__link"
+          :disable="isSubmitting || isResetting"
+          @click="handleReset"
+        >
+          {{ t('authenticateUser.forgotLink') }}
+        </q-btn>
+      </div>
         <div class="auth-register text-body2">
           <span>{{ t('authenticateUser.notRegistered') }}</span>
           <q-btn
@@ -102,6 +109,7 @@ const userStore = useUserStore();
 const form = reactive({
   email: '',
   password: '',
+  rememberMe: false,
 });
 
 const isSubmitting = ref(false);
@@ -152,6 +160,7 @@ const handleSubmit = async () => {
     const response = await api.post('/auth/login', {
       email: form.email,
       password: form.password,
+      rememberMe: form.rememberMe,
     });
 
     const token = response?.data?.token as string | undefined;
@@ -161,7 +170,7 @@ const handleSubmit = async () => {
     }
 
     window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    userStore.evaluateToken();
+    await userStore.evaluateToken();
     statusMessage.value = '';
     emit('login-success');
   } catch {
@@ -212,6 +221,19 @@ const handleReset = async () => {
 
 .auth-form {
   width: 100%;
+}
+
+.auth-form :deep(.q-field__label) {
+  font-size: 1rem;
+}
+
+.auth-form :deep(.q-field__native) {
+  font-size: 1.05rem;
+}
+
+.auth-form :deep(.q-field__control) {
+  min-height: 46px;
+  font-size: 1.05rem;
 }
 
 .auth-actions {
