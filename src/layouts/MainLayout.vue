@@ -1,8 +1,21 @@
 <template>
   <q-layout view="hHh lpR fFf">
-     <q-header elevated class="bg-primary text-white">
+    <q-header
+      elevated
+      :class="[
+        'main-header',
+        isDark ? 'main-header--dark' : 'main-header--light'
+      ]"
+    >
       <q-toolbar>
-        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
+        <q-btn
+          dense
+          flat
+          round
+          icon="menu"
+          :color="isDark ? 'white' : 'dark'"
+          @click="toggleLeftDrawer"
+        />
 
         <q-toolbar-title>
           <q-avatar>
@@ -18,6 +31,7 @@
           flat
           round
           :icon="themeIcon"
+          :color="isDark ? 'white' : 'dark'"
           :aria-label="toggleThemeAriaLabel"
           @click="toggleTheme"
         />
@@ -27,7 +41,7 @@
           class="q-ml-sm"
           dense
           borderless
-          dark
+          :dark="isDark"
           options-dense
           emit-value
           map-options
@@ -196,6 +210,34 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.main-header {
+  border-bottom: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.main-header--dark {
+  background: #0f172a;
+  color: #f8fafc;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.main-header--light {
+  background: #ffffff;
+  color: #111827;
+  border-bottom-color: #6f3ff5;
+}
+
+.main-header--light .q-toolbar,
+.main-header--light .q-toolbar__title,
+.main-header--light .q-icon,
+.main-header--light .q-btn,
+.main-header--light .q-btn span,
+.main-header--light .q-select,
+.main-header--light .q-field__native,
+.main-header--light .q-field__label {
+  color: #111827;
+}
+
 .main-drawer {
   display: flex;
 }
