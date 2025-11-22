@@ -5,26 +5,12 @@
         <h2 class="nodes-title text-h5 q-mb-xs">{{ t('nodesPage.title') }}</h2>
         <p class="nodes-subtitle text-body2">{{ t('nodesPage.subtitle') }}</p>
       </div>
-      <q-btn
-        class="nodes-add-button"
-        color="primary"
-        icon="add"
-        unelevated
-        :label="t('nodesPage.actions.add')"
-        @click="handleAddClick"
-        @mouseenter="handleAddButtonEnter"
-        @mouseleave="handleAddButtonLeave"
-        @focus="handleAddButtonEnter"
-        @blur="handleAddButtonLeave"
-      />
+      <q-btn class="nodes-add-button" color="primary" icon="add" unelevated :label="t('nodesPage.actions.add')"
+        @click="handleAddClick" @mouseenter="handleAddButtonEnter" @mouseleave="handleAddButtonLeave"
+        @focus="handleAddButtonEnter" @blur="handleAddButtonLeave" />
     </div>
 
-    <q-banner
-      v-if="shouldShowError"
-      dense
-      rounded
-      class="bg-negative text-white text-center q-mb-lg"
-    >
+    <q-banner v-if="shouldShowError" dense rounded class="bg-negative text-white text-center q-mb-lg">
       {{ t('nodesPage.error') }}
     </q-banner>
 
@@ -45,12 +31,7 @@
                   <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
                 </div>
               </div>
-              <img
-                v-if="node.logo"
-                :src="node.logo"
-                :alt="node.label"
-                class="nodes-card__logo"
-              />
+              <img v-if="node.logo" :src="node.logo" :alt="node.label" class="nodes-card__logo" />
               <q-icon v-else name="dns" size="36px" />
             </div>
             <p class="nodes-card__label">{{ node.label }}</p>
@@ -61,14 +42,8 @@
           <div class="nodes-empty__scene">
 
             <div class="nodes-empty__shadow"></div>
-            <div
-              class="nodes-empty__server"
-              :ref="(el) => setNodeRef(el, '__empty__server__')"
-            >
-              <div
-                class="server-node__eyes"
-                :class="{ 'server-node__eyes--happy': isNodeHappy }"
-              >
+            <div class="nodes-empty__server" :ref="(el) => setNodeRef(el, '__empty__server__')">
+              <div class="server-node__eyes" :class="{ 'server-node__eyes--happy': isNodeHappy }">
                 <div class="server-eye">
                   <div class="server-eye__pupil" :style="getPupilStyle()"></div>
                 </div>
@@ -89,35 +64,16 @@
       <q-card class="nodes-dialog q-pa-md">
         <div class="text-h6 q-mb-sm">{{ t('nodesPage.dialog.title') }}</div>
         <q-form @submit.prevent="submitNode" class="column q-gutter-md">
-          <q-input
-            v-model="form.name"
-            :label="t('nodesPage.dialog.fields.name')"
-            outlined
-            dense
-            :disable="form.submitting"
-          />
-          <q-input
-            v-model="form.powerKw"
-            type="number"
-            step="0.1"
-            :label="t('nodesPage.dialog.fields.power')"
-            outlined
-            dense
-            :disable="form.submitting"
-          />
+          <q-input v-model="form.name" :label="t('nodesPage.dialog.fields.name')" outlined dense
+            :disable="form.submitting" />
+          <q-input v-model="form.powerKw" type="number" step="0.1" :label="t('nodesPage.dialog.fields.power')" outlined
+            dense :disable="form.submitting" />
           <div>
             <div class="text-caption text-grey-6 q-mb-xs">
               {{ t('nodesPage.dialog.fields.uptime') }}
             </div>
-            <q-time
-              v-model="form.uptime"
-              format24h
-              mask="HH:mm"
-              :with-seconds="false"
-              :hour-options="hourOptions"
-              :minute-options="minuteOptions"
-              :disable="form.submitting"
-            />
+            <q-time v-model="form.uptime" format24h mask="HH:mm" :with-seconds="false" :hour-options="hourOptions"
+              :minute-options="minuteOptions" :disable="form.submitting" />
             <div class="text-caption text-grey-6 q-mt-xs">
               {{ t('nodesPage.dialog.uptimeHelper') }}
             </div>
@@ -128,19 +84,9 @@
           </div>
 
           <div class="row justify-end q-gutter-sm">
-            <q-btn
-              flat
-              :label="t('nodesPage.dialog.actions.cancel')"
-              :disable="form.submitting"
-              @click="closeDialog"
-            />
-            <q-btn
-              color="primary"
-              unelevated
-              :label="t('nodesPage.dialog.actions.save')"
-              type="submit"
-              :loading="form.submitting"
-            />
+            <q-btn flat :label="t('nodesPage.dialog.actions.cancel')" :disable="form.submitting" @click="closeDialog" />
+            <q-btn color="primary" unelevated :label="t('nodesPage.dialog.actions.save')" type="submit"
+              :loading="form.submitting" />
           </div>
         </q-form>
       </q-card>
@@ -398,8 +344,29 @@ onBeforeUnmount(() => {
   box-shadow: 0 14px 22px rgba(15, 23, 43, 0.2);
 }
 
+
+
+
 .nodes-title {
   font-weight: 600;
+}
+
+.nodes-page :global(.text-h5),
+.nodes-page :global(.text-body2),
+.nodes-page :global(.text-white) {
+  transition: color 0.2s ease;
+}
+
+:global(body.body--light) .nodes-title {
+  color: #8b5a2b;
+}
+
+:global(body.body--light) .nodes-subtitle {
+  color: #5b5e6b;
+}
+
+:global(body.body--light) .nodes-header .q-btn {
+  color: #ffffff;
 }
 
 .nodes-subtitle {
@@ -510,6 +477,11 @@ onBeforeUnmount(() => {
   margin: 0;
   font-weight: 600;
   text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:global(body.body--light) .nodes-card__label {
+  color: #1c2340;
 }
 
 .nodes-empty {
@@ -687,10 +659,11 @@ onBeforeUnmount(() => {
 .nodes-empty__title {
   margin: 0 0 4px;
   font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 :global(body.body--light) .nodes-empty__title {
-  color: #1f2a44;
+  color: #8b5a2b;
 }
 
 .nodes-empty__hint {
@@ -699,7 +672,7 @@ onBeforeUnmount(() => {
 }
 
 :global(body.body--light) .nodes-empty__hint {
-  color: #4c566a;
+  color: #5b5e6b;
 }
 
 .nodes-dialog {
@@ -708,19 +681,24 @@ onBeforeUnmount(() => {
 }
 
 @keyframes nodes-server-shake {
+
   0%,
   100% {
     transform: rotate(0deg) translate3d(0, 0, 0);
   }
+
   20% {
     transform: rotate(-6deg) translate3d(-2px, 0, 0);
   }
+
   40% {
     transform: rotate(5deg) translate3d(2px, 0, 0);
   }
+
   60% {
     transform: rotate(-4deg) translate3d(-1px, 0, 0);
   }
+
   80% {
     transform: rotate(3deg) translate3d(1px, 0, 0);
   }
