@@ -66,8 +66,26 @@
         <q-form @submit.prevent="submitNode" class="column q-gutter-md">
           <q-input v-model="form.name" :label="t('nodesPage.dialog.fields.name')" outlined dense
             :disable="form.submitting" />
-          <q-input v-model="form.powerKw" type="number" step="0.1" :label="t('nodesPage.dialog.fields.power')" outlined
-            dense :disable="form.submitting" />
+          <q-input
+            v-model="form.powerKw"
+            type="number"
+            step="0.001"
+            min="0"
+            :label="t('nodesPage.dialog.fields.power')"
+            outlined
+            dense
+            :disable="form.submitting"
+          >
+            <template #append>
+              <q-btn
+                flat
+                dense
+                round
+                icon="info"
+                @click.stop="powerInfoDialog = true"
+              />
+            </template>
+          </q-input>
           <div>
             <div class="text-caption text-grey-6 q-mb-xs">
               {{ t('nodesPage.dialog.fields.uptime') }}
@@ -111,6 +129,17 @@
         </q-form>
       </q-card>
     </q-dialog>
+    <q-dialog v-model="powerInfoDialog">
+      <q-card class="nodes-dialog q-pa-md">
+        <div class="text-h6 q-mb-sm">{{ t('nodesPage.dialog.powerInfo.title') }}</div>
+        <p class="text-body2 q-mb-md">
+          {{ t('nodesPage.dialog.powerInfo.description') }}
+        </p>
+        <div class="row justify-end">
+          <q-btn flat color="primary" :label="t('nodesPage.dialog.powerInfo.close')" @click="powerInfoDialog = false" />
+        </div>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -146,6 +175,7 @@ const isLoading = ref(false);
 const hasError = ref(false);
 const isDialogOpen = ref(false);
 const isNodeHappy = ref(false);
+const powerInfoDialog = ref(false);
 const form = reactive({
   name: '',
   powerKw: '',
@@ -293,6 +323,7 @@ const resetForm = () => {
 
 const handleDialogHide = () => {
   resetForm();
+  powerInfoDialog.value = false;
 };
 
 const timeToSeconds = (hoursInput: number, minutesInput: number) => {

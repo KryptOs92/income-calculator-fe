@@ -288,6 +288,8 @@ const happyServers = ref<Record<string, boolean>>({});
 const shakingServers = ref<Record<string, boolean>>({});
 const stageSize = reactive({ width: 1, height: 1 });
 const cursor = reactive({ x: 0, y: 0 });
+const pendingCursor = { x: 0, y: 0 };
+let cursorRafId: number | null = null;
 const shakeTimeouts = new Map<string, number>();
 const happyTimeouts = new Map<string, number>();
 
@@ -454,6 +456,21 @@ const updateStageMetrics = () => {
   stageSize.height = rect.height;
 };
 
+const commitCursorUpdate = () => {
+  cursor.x = pendingCursor.x;
+  cursor.y = pendingCursor.y;
+};
+
+const scheduleCursorUpdate = () => {
+  if (cursorRafId !== null) {
+    return;
+  }
+  cursorRafId = window.requestAnimationFrame(() => {
+    cursorRafId = null;
+    commitCursorUpdate();
+  });
+};
+
 const handleMouseMove = (event: MouseEvent) => {
   const stageEl = stageRef.value;
   if (!stageEl) {
@@ -461,13 +478,15 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 
   const rect = stageEl.getBoundingClientRect();
-  cursor.x = event.clientX - rect.left;
-  cursor.y = event.clientY - rect.top;
+  pendingCursor.x = event.clientX - rect.left;
+  pendingCursor.y = event.clientY - rect.top;
+  scheduleCursorUpdate();
 };
 
 const handleMouseLeave = () => {
-  cursor.x = stageSize.width / 2;
-  cursor.y = stageSize.height / 2;
+  pendingCursor.x = stageSize.width / 2;
+  pendingCursor.y = stageSize.height / 2;
+  scheduleCursorUpdate();
 };
 
 const getPupilStyle = (server: ServerNode) => {
@@ -876,6 +895,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateStageMetrics);
+  if (cursorRafId !== null) {
+    window.cancelAnimationFrame(cursorRafId);
+    cursorRafId = null;
+  }
   if (alertTimer !== undefined) {
     window.clearInterval(alertTimer);
     alertTimer = undefined;
