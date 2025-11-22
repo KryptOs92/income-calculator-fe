@@ -4,6 +4,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import { TOKEN_STORAGE_KEY } from "src/stores/user-store";
+import { useUserStore } from "src/stores/user-store";
+import { useRouter } from "vue-router";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/";
@@ -45,6 +47,33 @@ const applyAuthToken = (config: InternalAxiosRequestConfig) => {
 
 axios.interceptors.request.use(applyAuthToken);
 api.interceptors.request.use(applyAuthToken);
+
+const handleAuthFailure = (error: unknown) => {
+  const responseStatus =
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as { response?: { status?: number } }).response?.status ===
+      "number"
+      ? (error as { response?: { status?: number } }).response!.status
+      : undefined;
+  const isUnauthenticated = responseStatus === 401;
+  if (isUnauthenticated) {
+    const userStore = useUserStore();
+    userStore.logout();
+    const router = useRouter();
+    if (router.currentRoute?.value.name !== "sign-in") {
+      void router.replace({ name: "sign-in" });
+    }
+  }
+
+  return Promise.reject(
+    error instanceof Error ? error : new Error("request-failed")
+  );
+};
+
+axios.interceptors.response.use((response) => response, handleAuthFailure);
+api.interceptors.response.use((response) => response, handleAuthFailure);
 
 export default defineBoot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api

@@ -1,12 +1,12 @@
-import { defineRouter } from '#q-app/wrappers';
+import { defineRouter } from "#q-app/wrappers";
 import {
   createMemoryHistory,
   createRouter,
   createWebHashHistory,
   createWebHistory,
-} from 'vue-router';
-import routes from './routes';
-import { useUserStore } from 'src/stores/user-store';
+} from "vue-router";
+import routes from "./routes";
+import { useUserStore } from "src/stores/user-store";
 
 /*
  * If not building with SSR mode, you can
@@ -20,7 +20,9 @@ import { useUserStore } from 'src/stores/user-store';
 export default defineRouter(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory);
+    : process.env.VUE_ROUTER_MODE === "history"
+    ? createWebHistory
+    : createWebHashHistory;
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
@@ -33,7 +35,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   });
 
   Router.beforeEach(async (to, from, next) => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       next();
       return;
     }
@@ -48,12 +50,14 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       return;
     }
 
+    console.log("USERSTOEE ", userStore.isAuthenticated);
+
     if (userStore.isAuthenticated) {
       next();
       return;
     }
 
-    next('/sign-in');
+    next("/sign-in");
   });
 
   return Router;
