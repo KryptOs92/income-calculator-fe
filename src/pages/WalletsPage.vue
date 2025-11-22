@@ -24,27 +24,17 @@
 
     <template v-else>
       <div class="wallet-search q-mb-xl">
-        <q-input
-          v-model="searchTerm"
-          outlined
-          dense
-          :label="t('walletsPage.search.label')"
-          :placeholder="t('walletsPage.search.placeholder')"
-        />
+        <q-input v-model="searchTerm" outlined dense :label="t('walletsPage.search.label')"
+          :placeholder="t('walletsPage.search.placeholder')" />
       </div>
 
       <div class="wallet-map">
         <template v-if="visibleNodes.length">
-          <div
-            v-for="node in visibleNodes"
-            :key="node.id"
-            class="wallet-node"
-            :class="{
-              'wallet-node--ready': node.isReady,
-              'wallet-node--inactive': !node.isReady,
-              'wallet-node--blink': node.matchesSearch,
-            }"
-          >
+          <div v-for="node in visibleNodes" :key="node.id" class="wallet-node" :class="{
+            'wallet-node--ready': node.isReady,
+            'wallet-node--inactive': !node.isReady,
+            'wallet-node--blink': node.matchesSearch,
+          }">
             <img :src="node.logo" :alt="node.label" class="wallet-node__logo" />
             <span class="wallet-node__label">{{ node.label }}</span>
             <span v-if="!node.isReady" class="wallet-node__status">work in progress..</span>
@@ -328,10 +318,12 @@ onMounted(() => {
     opacity: 0.4;
     filter: drop-shadow(0 0 8px rgba(111, 63, 245, 0));
   }
+
   50% {
     opacity: 1;
     filter: drop-shadow(0 0 20px rgba(111, 63, 245, 0.85));
   }
+
   100% {
     opacity: 0.4;
     filter: drop-shadow(0 0 8px rgba(111, 63, 245, 0));
@@ -368,6 +360,6 @@ onMounted(() => {
 }
 
 :global(body.body--light) .wallet-node__status {
-  color: #d97706;
+  color: #0f172a;
 }
 </style>

@@ -362,7 +362,7 @@ onBeforeUnmount(() => {
 }
 
 :global(body.body--light) .nodes-subtitle {
-  color: #5b5e6b;
+  color: #0f172a;
 }
 
 :global(body.body--light) .nodes-header .q-btn {
