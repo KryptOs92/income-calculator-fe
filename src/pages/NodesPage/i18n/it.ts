@@ -17,6 +17,8 @@ export default {
         name: 'Nome',
         power: 'Consumo medio (kW)',
         uptime: 'Uptime medio giornaliero',
+        hours: 'Ore',
+        minutes: 'Minuti',
       },
       uptimeHelper: 'Fino a 24 ore al giorno. Ore e minuti saranno convertiti in secondi.',
       actions: {

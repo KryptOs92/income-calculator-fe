@@ -72,8 +72,28 @@
             <div class="text-caption text-grey-6 q-mb-xs">
               {{ t('nodesPage.dialog.fields.uptime') }}
             </div>
-            <q-time v-model="form.uptime" format24h mask="HH:mm" :with-seconds="false" :hour-options="hourOptions"
-              :minute-options="minuteOptions" :disable="form.submitting" />
+            <div class="row q-col-gutter-sm">
+              <q-input
+                v-model.number="form.uptimeHours"
+                type="number"
+                min="0"
+                max="24"
+                :label="t('nodesPage.dialog.fields.hours')"
+                outlined
+                dense
+                :disable="form.submitting"
+              />
+              <q-input
+                v-model.number="form.uptimeMinutes"
+                type="number"
+                min="0"
+                max="59"
+                :label="t('nodesPage.dialog.fields.minutes')"
+                outlined
+                dense
+                :disable="form.submitting"
+              />
+            </div>
             <div class="text-caption text-grey-6 q-mt-xs">
               {{ t('nodesPage.dialog.uptimeHelper') }}
             </div>
@@ -129,13 +149,11 @@ const isNodeHappy = ref(false);
 const form = reactive({
   name: '',
   powerKw: '',
-  uptime: '24:00',
+  uptimeHours: 24,
+  uptimeMinutes: 0,
   submitting: false,
   error: '',
 });
-
-const hourOptions = Array.from({ length: 25 }, (_, idx) => idx);
-const minuteOptions = Array.from({ length: 12 }, (_, idx) => idx * 5);
 
 const normalizedSearch = computed(() => searchTerm.value.trim().toLowerCase());
 
@@ -267,7 +285,8 @@ const closeDialog = () => {
 const resetForm = () => {
   form.name = '';
   form.powerKw = '';
-  form.uptime = '24:00';
+  form.uptimeHours = 24;
+  form.uptimeMinutes = 0;
   form.error = '';
   form.submitting = false;
 };
@@ -276,13 +295,9 @@ const handleDialogHide = () => {
   resetForm();
 };
 
-const timeToSeconds = (value: string) => {
-  if (!value) {
-    return 86400;
-  }
-  const [h, m] = value.split(':');
-  const hours = Math.min(Number(h) || 0, 24);
-  const minutes = Math.min(Number(m) || 0, 59);
+const timeToSeconds = (hoursInput: number, minutesInput: number) => {
+  const hours = Math.min(Math.max(Number(hoursInput) || 0, 0), 24);
+  const minutes = Math.min(Math.max(Number(minutesInput) || 0, 0), 59);
   return hours * 3600 + minutes * 60;
 };
 
@@ -302,7 +317,7 @@ const submitNode = async () => {
     const payload = {
       name: form.name.trim(),
       powerKw: Number(form.powerKw),
-      dailyUptimeSeconds: timeToSeconds(form.uptime),
+      dailyUptimeSeconds: timeToSeconds(form.uptimeHours, form.uptimeMinutes),
     };
     await api.post('/server-nodes', payload);
     isDialogOpen.value = false;

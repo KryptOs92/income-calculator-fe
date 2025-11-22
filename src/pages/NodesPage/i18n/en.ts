@@ -17,6 +17,8 @@ export default {
         name: 'Name',
         power: 'Average consumption (kW)',
         uptime: 'Average daily uptime',
+        hours: 'Hours',
+        minutes: 'Minutes',
       },
       uptimeHelper: 'Up to 24h per day. Hours and minutes will be converted to seconds.',
       actions: {
