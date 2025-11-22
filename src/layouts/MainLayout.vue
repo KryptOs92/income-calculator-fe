@@ -90,6 +90,20 @@
               </q-item-section>
             </q-item>
             <q-item
+              v-if="isAuthenticated"
+              v-ripple
+              clickable
+              :to="{ path: '/nodes' }"
+              @click="leftDrawerOpen = false"
+            >
+              <q-item-section avatar>
+                <q-icon name="dns" />
+              </q-item-section>
+              <q-item-section>
+                {{ t('layout.nav.nodes') }}
+              </q-item-section>
+            </q-item>
+            <q-item
               v-ripple
               clickable
               :to="{ path: '/' }"

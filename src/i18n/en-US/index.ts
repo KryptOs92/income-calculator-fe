@@ -6,6 +6,7 @@ import signInPage from 'src/pages/SignInPage/i18n/en';
 import verifyPage from 'src/pages/VerifyPage/i18n/en';
 import resetPasswordPage from 'src/pages/ResetPasswordPage/i18n/en';
 import walletsPage from 'src/pages/WalletsPage/i18n/en';
+import nodesPage from 'src/pages/NodesPage/i18n/en';
 
 export default {
   failed: 'Action failed',
@@ -18,4 +19,5 @@ export default {
   ...verifyPage,
   ...resetPasswordPage,
   ...walletsPage,
+  ...nodesPage,
 };

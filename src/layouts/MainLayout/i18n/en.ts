@@ -6,6 +6,7 @@ export default {
       language: 'Select language',
       overview: 'Overview',
       wallets: 'Wallets',
+      nodes: 'Nodes',
       logout: 'Log out',
       aboutApp: 'What is this application?',
       signIn: 'Sign in',
