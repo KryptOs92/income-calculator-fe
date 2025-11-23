@@ -40,15 +40,13 @@
                 </div>
                 <div class="nodes-card__content">
                   <div class="nodes-card__name">{{ node.label }}</div>
-                  <div class="nodes-card__actions nodes-card__actions--dual column q-gutter-sm">
-                    <q-btn color="primary" unelevated icon="open_in_new" class="full-width"
-                      :label="t('nodesPage.actions.details')" @click="goToNode(node.id)" />
-                    <q-btn color="negative" unelevated icon="power_settings_new" class="full-width"
-                      :label="t('nodesPage.actions.disable')" @click="openDisableDialog(node)" />
+                  <div class="nodes-card__actions nodes-card__actions--dual row q-gutter-sm justify-center">
+                    <q-btn color="primary" unelevated icon="open_in_new" round @click="goToNode(node.id)" />
+                    <q-btn color="negative" unelevated icon="power_settings_new" round
+                      @click="openDisableDialog(node)" />
                   </div>
                 </div>
               </div>
-              <p class="nodes-card__label">{{ node.label }}</p>
             </div>
           </div>
 
@@ -58,7 +56,7 @@
           </div>
         </section>
 
-        <section class="nodes-section">
+        <section>
           <q-expansion-item dense switch-toggle expand-separator class="nodes-accordion">
             <template #header>
               <div class="row items-center justify-between full-width">
@@ -84,12 +82,12 @@
                   <div class="nodes-card__content">
                     <div class="nodes-card__name">{{ node.label }}</div>
                     <div class="nodes-card__actions nodes-card__actions--single">
-                      <q-btn color="positive" unelevated icon="power_settings_new" class="full-width"
-                        :label="t('nodesPage.actions.activate')" @click="openActivateDialog(node)" />
+                      <q-btn color="primary" unelevated icon="open_in_new" round @click="goToNode(node.id)" />
+                      <q-btn color="positive" unelevated icon="power_settings_new" round
+                        @click="openActivateDialog(node)" />
                     </div>
                   </div>
                 </div>
-                <p class="nodes-card__label">{{ node.label }}</p>
               </div>
             </div>
 
@@ -446,10 +444,11 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 32px;
+  padding-bottom: 30px;
 }
 
 .nodes-section {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(111, 63, 245, 0.18);
   border-radius: 18px;
   padding: 18px;
   background: linear-gradient(180deg, rgba(22, 32, 64, 0.6), rgba(12, 18, 34, 0.65));
@@ -484,6 +483,8 @@ onBeforeUnmount(() => {
 }
 
 .nodes-eyes {
+  position: absolute;
+  top: -10px;
   display: flex;
   gap: 10px;
 }
@@ -555,8 +556,10 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 56px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
 }
 
 .nodes-card__name {
@@ -568,55 +571,35 @@ onBeforeUnmount(() => {
 }
 
 .nodes-card__actions {
-  position: absolute;
-  inset: 0;
+  position: static;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  width: 100%;
+  opacity: 1;
+  pointer-events: auto;
+  transition: none;
 }
 
 .nodes-card__actions--dual {
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%;
 }
 
 .nodes-card__actions--single {
   max-width: 140px;
+  width: auto;
+  justify-content: center;
+  gap: 10px;
 }
 
-.nodes-card__body:hover .nodes-card__actions {
-  opacity: 1;
-  pointer-events: auto;
-}
 
-.nodes-card__body:focus-within .nodes-card__actions {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.nodes-card__body:hover .nodes-card__name {
-  opacity: 0;
-}
-
-.nodes-card__body:focus-within .nodes-card__name {
-  opacity: 0;
-}
-
-.nodes-card__label {
-  margin: 0;
-  font-weight: 600;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.9);
-}
 
 .nodes-accordion {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(111, 63, 245, 0.18);
 
 }
 
@@ -653,7 +636,7 @@ onBeforeUnmount(() => {
   }
 
   .nodes-section {
-    border-color: rgba(15, 23, 43, 0.08);
+    border-color: rgba(111, 63, 245, 0.28);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 255, 0.92));
   }
 
@@ -670,13 +653,14 @@ onBeforeUnmount(() => {
     opacity: 0.96;
   }
 
-  .nodes-card__label,
+
   .nodes-card__name {
     color: #0f172a;
   }
 
   :deep(.nodes-accordion) {
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    border-color: rgba(111, 63, 245, 0.28);
   }
 
   .nodes-empty__popup {
@@ -781,6 +765,9 @@ onBeforeUnmount(() => {
   z-index: 0;
   pointer-events: none;
 }
+
+
+
 
 .nodes-empty__server {
   position: relative;
