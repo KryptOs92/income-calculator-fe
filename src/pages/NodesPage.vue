@@ -6,8 +6,7 @@
         <p class="nodes-subtitle text-body2">{{ t('nodesPage.subtitle') }}</p>
       </div>
       <q-btn class="nodes-add-button" color="primary" icon="add" unelevated :label="t('nodesPage.actions.add')"
-        @click="handleAddClick" @mouseenter="handleAddButtonEnter" @mouseleave="handleAddButtonLeave"
-        @focus="handleAddButtonEnter" @blur="handleAddButtonLeave" />
+        @click="handleAddClick" />
     </div>
 
     <q-banner v-if="shouldShowError" dense rounded class="bg-negative text-white text-center q-mb-lg">
@@ -20,43 +19,86 @@
       </div>
 
       <template v-else>
-        <div v-if="visibleNodes.length" class="nodes-grid">
-          <div v-for="node in visibleNodes" :key="node.id" class="nodes-card">
-            <div class="nodes-card__body" :ref="(el) => setNodeRef(el, node.id)">
-              <div class="nodes-eyes" :class="{ 'nodes-eyes--happy': isNodeHappy }">
-                <div class="nodes-eye">
-                  <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
-                </div>
-                <div class="nodes-eye">
-                  <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
-                </div>
-              </div>
-              <img v-if="node.logo" :src="node.logo" :alt="node.label" class="nodes-card__logo" />
-              <q-icon v-else name="dns" size="36px" />
-            </div>
-            <p class="nodes-card__label">{{ node.label }}</p>
-          </div>
-        </div>
-
-        <div v-else class="nodes-empty column items-center justify-center">
-          <div class="nodes-empty__scene">
-
-            <div class="nodes-empty__shadow"></div>
-            <div class="nodes-empty__server" :ref="(el) => setNodeRef(el, '__empty__server__')">
-              <div class="server-node__eyes" :class="{ 'server-node__eyes--happy': isNodeHappy }">
-                <div class="server-eye">
-                  <div class="server-eye__pupil" :style="getPupilStyle()"></div>
-                </div>
-                <div class="server-eye">
-                  <div class="server-eye__pupil" :style="getPupilStyle()"></div>
-                </div>
-              </div>
-              <q-icon name="dns" size="40px" class="nodes-empty__server-icon" />
+        <section class="nodes-section q-mb-xl">
+          <div class="row items-center justify-between q-mb-md">
+            <h3 class="nodes-section__title text-subtitle1">{{ t('nodesPage.sections.active') }}</h3>
+            <div v-if="activeNodes.length" class="text-caption text-grey-5">
+              {{ t('nodesPage.sections.count', { count: activeNodes.length }) }}
             </div>
           </div>
-          <p class="nodes-empty__title">{{ t('nodesPage.empty.label') }}</p>
-          <p class="nodes-empty__hint">{{ t('nodesPage.empty.hint') }}</p>
-        </div>
+
+          <div v-if="activeNodes.length" class="nodes-grid">
+            <div v-for="node in activeNodes" :key="node.id" class="nodes-card nodes-card--active">
+              <div class="nodes-card__body" :ref="(el) => setNodeRef(el, node.id)">
+                <div class="nodes-eyes nodes-eyes--open">
+                  <div class="nodes-eye">
+                    <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
+                  </div>
+                  <div class="nodes-eye">
+                    <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
+                  </div>
+                </div>
+                <div class="nodes-card__content">
+                  <div class="nodes-card__name">{{ node.label }}</div>
+                  <div class="nodes-card__actions nodes-card__actions--dual column q-gutter-sm">
+                    <q-btn color="primary" unelevated icon="open_in_new" class="full-width"
+                      :label="t('nodesPage.actions.details')" @click="goToNode(node.id)" />
+                    <q-btn color="negative" unelevated icon="power_settings_new" class="full-width"
+                      :label="t('nodesPage.actions.disable')" @click="openDisableDialog(node)" />
+                  </div>
+                </div>
+              </div>
+              <p class="nodes-card__label">{{ node.label }}</p>
+            </div>
+          </div>
+
+          <div v-else class="nodes-empty nodes-empty--compact column items-center justify-center">
+            <p class="nodes-empty__title">{{ t('nodesPage.emptyActive.label') }}</p>
+            <p class="nodes-empty__hint">{{ t('nodesPage.emptyActive.hint') }}</p>
+          </div>
+        </section>
+
+        <section class="nodes-section">
+          <q-expansion-item dense switch-toggle expand-separator class="nodes-accordion">
+            <template #header>
+              <div class="row items-center justify-between full-width">
+                <div class="row items-center">
+                  <q-icon name="power_settings_new" color="negative" class="q-mr-sm" />
+                  <span class="nodes-section__title text-subtitle1">{{ t('nodesPage.sections.disabled') }}</span>
+                </div>
+                <q-badge color="grey-7" text-color="white" :label="disabledNodes.length" />
+              </div>
+            </template>
+
+            <div v-if="disabledNodes.length" class="nodes-grid q-mt-md">
+              <div v-for="node in disabledNodes" :key="node.id" class="nodes-card nodes-card--disabled">
+                <div class="nodes-card__body" :ref="(el) => setNodeRef(el, node.id)">
+                  <div class="nodes-eyes nodes-eyes--closed">
+                    <div class="nodes-eye">
+                      <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
+                    </div>
+                    <div class="nodes-eye">
+                      <div class="nodes-eye__pupil" :style="getPupilStyle()"></div>
+                    </div>
+                  </div>
+                  <div class="nodes-card__content">
+                    <div class="nodes-card__name">{{ node.label }}</div>
+                    <div class="nodes-card__actions nodes-card__actions--single">
+                      <q-btn color="positive" unelevated icon="power_settings_new" class="full-width"
+                        :label="t('nodesPage.actions.activate')" @click="openActivateDialog(node)" />
+                    </div>
+                  </div>
+                </div>
+                <p class="nodes-card__label">{{ node.label }}</p>
+              </div>
+            </div>
+
+            <div v-else class="nodes-empty nodes-empty--compact column items-center justify-center q-mt-md">
+              <p class="nodes-empty__title">{{ t('nodesPage.emptyDisabled.label') }}</p>
+              <p class="nodes-empty__hint">{{ t('nodesPage.emptyDisabled.hint') }}</p>
+            </div>
+          </q-expansion-item>
+        </section>
       </template>
     </div>
 
@@ -66,56 +108,6 @@
         <q-form @submit.prevent="submitNode" class="column q-gutter-md">
           <q-input v-model="form.name" :label="t('nodesPage.dialog.fields.name')" outlined dense
             :disable="form.submitting" />
-          <q-input
-            v-model="form.powerWh"
-            type="number"
-            step="0.001"
-            min="0"
-            :label="t('nodesPage.dialog.fields.power')"
-            outlined
-            dense
-            :disable="form.submitting"
-          >
-            <template #append>
-              <q-btn
-                flat
-                dense
-                round
-                icon="info"
-                @click.stop="powerInfoDialog = true"
-              />
-            </template>
-          </q-input>
-          <div>
-            <div class="text-caption text-grey-6 q-mb-xs">
-              {{ t('nodesPage.dialog.fields.uptime') }}
-            </div>
-            <div class="row q-col-gutter-sm">
-              <q-input
-                v-model.number="form.uptimeHours"
-                type="number"
-                min="0"
-                max="24"
-                :label="t('nodesPage.dialog.fields.hours')"
-                outlined
-                dense
-                :disable="form.submitting"
-              />
-              <q-input
-                v-model.number="form.uptimeMinutes"
-                type="number"
-                min="0"
-                max="59"
-                :label="t('nodesPage.dialog.fields.minutes')"
-                outlined
-                dense
-                :disable="form.submitting"
-              />
-            </div>
-            <div class="text-caption text-grey-6 q-mt-xs">
-              {{ t('nodesPage.dialog.uptimeHelper') }}
-            </div>
-          </div>
 
           <div v-if="form.error" class="text-negative text-caption">
             {{ form.error }}
@@ -129,14 +121,31 @@
         </q-form>
       </q-card>
     </q-dialog>
-    <q-dialog v-model="powerInfoDialog">
+
+    <q-dialog v-model="isDisableDialogOpen" @hide="closeDisableDialog">
       <q-card class="nodes-dialog q-pa-md">
-        <div class="text-h6 q-mb-sm">{{ t('nodesPage.dialog.powerInfo.title') }}</div>
-        <p class="text-body2 q-mb-md">
-          {{ t('nodesPage.dialog.powerInfo.description') }}
-        </p>
-        <div class="row justify-end">
-          <q-btn flat color="primary" :label="t('nodesPage.dialog.powerInfo.close')" @click="powerInfoDialog = false" />
+        <div class="text-h6 q-mb-sm">{{ t('nodesPage.disableDialog.title') }}</div>
+        <p class="q-mb-md">{{ t('nodesPage.disableDialog.message') }}</p>
+        <div class="row justify-end q-gutter-sm">
+          <q-btn flat :disable="disableSubmitting" :label="t('nodesPage.disableDialog.actions.cancel')"
+            @click="closeDisableDialog" />
+          <q-btn color="negative" unelevated icon="power_settings_new"
+            :label="t('nodesPage.disableDialog.actions.confirm')" :loading="disableSubmitting"
+            @click="confirmDisableNode" />
+        </div>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="isActivateDialogOpen" @hide="closeActivateDialog">
+      <q-card class="nodes-dialog q-pa-md">
+        <div class="text-h6 q-mb-sm">{{ t('nodesPage.activateDialog.title') }}</div>
+        <p class="q-mb-md">{{ t('nodesPage.activateDialog.message') }}</p>
+        <div class="row justify-end q-gutter-sm">
+          <q-btn flat :disable="activateSubmitting" :label="t('nodesPage.activateDialog.actions.cancel')"
+            @click="closeActivateDialog" />
+          <q-btn color="positive" unelevated icon="power_settings_new"
+            :label="t('nodesPage.activateDialog.actions.confirm')" :loading="activateSubmitting"
+            @click="confirmActivateNode" />
         </div>
       </q-card>
     </q-dialog>
@@ -146,81 +155,68 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import type { ComponentPublicInstance } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
-import algorandLogo from 'src/assets/logos/algorand-algo-logo.png';
-import cardanoLogo from 'src/assets/logos/cardano-ada-logo.png';
 
 type ServerNodeResponse = {
   id?: string | number;
   name?: string;
   symbol?: string;
   isReady?: boolean;
-  logo?: string;
   [key: string]: unknown;
 };
 
 type LocalNode = {
   id: string;
   label: string;
-  logo: string;
   isReady: boolean;
+  isDeleted?: boolean;
 };
 
 const { t } = useI18n();
+const router = useRouter();
+const $q = useQuasar();
 
-const nodes = ref<LocalNode[]>([]);
-const searchTerm = ref('');
+const activeNodes = ref<LocalNode[]>([]);
+const disabledNodes = ref<LocalNode[]>([]);
 const isLoading = ref(false);
 const hasError = ref(false);
 const isDialogOpen = ref(false);
-const isNodeHappy = ref(false);
-const powerInfoDialog = ref(false);
+const isDisableDialogOpen = ref(false);
+const isActivateDialogOpen = ref(false);
+const disableSubmitting = ref(false);
+const activateSubmitting = ref(false);
+const nodeToDisable = ref<LocalNode | null>(null);
+const nodeToActivate = ref<LocalNode | null>(null);
 const form = reactive({
   name: '',
-  powerWh: '',
-  uptimeHours: 24,
-  uptimeMinutes: 0,
   submitting: false,
   error: '',
 });
 
-const normalizedSearch = computed(() => searchTerm.value.trim().toLowerCase());
-
-const decoratedNodes = computed(() =>
-  nodes.value.map((node) => ({
-    ...node,
-    matchesSearch:
-      normalizedSearch.value.length > 0 &&
-      node.label.toLowerCase().includes(normalizedSearch.value),
-  }))
-);
-
-const visibleNodes = computed(() => {
-  if (!normalizedSearch.value.length) {
-    return decoratedNodes.value;
-  }
-
-  return decoratedNodes.value.filter((node) => node.matchesSearch);
-});
-
 const shouldShowError = computed(() => hasError.value && !isLoading.value);
-
-const availableLogos: Record<string, string> = {
-  AlgorandLogo: algorandLogo,
-  CardanoLogo: cardanoLogo,
-};
-const fallbackLogo = cardanoLogo;
 
 const fetchNodes = async () => {
   isLoading.value = true;
   hasError.value = false;
   try {
-    const response = await api.get('/server-nodes');
-    const list = normalizePayload(response?.data);
-    nodes.value = list.length ? list.map((entry, index) => toLocalNode(entry, index)) : [];
+    const [activeResponse, deletedResponse] = await Promise.all([
+      api.get('/server-nodes'),
+      api.get('/server-nodes/deleted'),
+    ]);
+    const activeList = normalizePayload(activeResponse?.data);
+    const deletedList = normalizePayload(deletedResponse?.data);
+    activeNodes.value = activeList.length
+      ? activeList.map((entry, index) => toLocalNode(entry, index))
+      : [];
+    disabledNodes.value = deletedList.length
+      ? deletedList.map((entry, index) => toLocalNode(entry, index, { isDeleted: true }))
+      : [];
   } catch {
-    nodes.value = [];
+    activeNodes.value = [];
+    disabledNodes.value = [];
     hasError.value = true;
   } finally {
     isLoading.value = false;
@@ -243,32 +239,19 @@ const normalizePayload = (payload: unknown): ServerNodeResponse[] => {
   return [];
 };
 
-const toLocalNode = (entry: ServerNodeResponse, index: number): LocalNode => {
+const toLocalNode = (entry: ServerNodeResponse, index: number, options?: { isDeleted?: boolean }): LocalNode => {
   const rawName =
     typeof entry.name === 'string' && entry.name.length ? entry.name : `Node ${index + 1}`;
   const symbol =
     typeof entry.symbol === 'string' && entry.symbol.length ? entry.symbol.toUpperCase() : '';
   const label = symbol ? `${rawName} (${symbol})` : rawName;
   const sanitizedName = rawName.replace(/\s+/g, '');
-  const record = entry as Record<string, unknown>;
-  const rawLogoKey = `${rawName}Logo`;
-  const sanitizedLogoKey = `${sanitizedName}Logo`;
-  const keyCandidates = [rawLogoKey, sanitizedLogoKey];
-  const propertyLogo = keyCandidates
-    .map((key) => record[key])
-    .find((value) => typeof value === 'string' && value.length) as string | undefined;
-  const derivedLogo =
-    propertyLogo ??
-    availableLogos[sanitizedLogoKey] ??
-    availableLogos[rawLogoKey] ??
-    (typeof entry.logo === 'string' ? entry.logo : undefined) ??
-    fallbackLogo;
 
   return {
     id: `${entry.id ?? `${sanitizedName}-${symbol || index}`}`,
     label,
-    logo: derivedLogo,
     isReady: Boolean(entry.isReady),
+    isDeleted: Boolean(options?.isDeleted),
   };
 };
 
@@ -292,20 +275,32 @@ const setNodeRef = (el: Element | ComponentPublicInstance | null, id: string) =>
 
 const getPupilStyle = () => ({});
 
-const setNodeHappiness = (value: boolean) => {
-  isNodeHappy.value = value;
-};
-
-const handleAddButtonEnter = () => {
-  setNodeHappiness(true);
-};
-
-const handleAddButtonLeave = () => {
-  setNodeHappiness(false);
-};
-
 const handleAddClick = () => {
   isDialogOpen.value = true;
+};
+
+const goToNode = (id: string) => {
+  void router.push({ path: `/nodes/${id}` });
+};
+
+const openDisableDialog = (node: LocalNode) => {
+  nodeToDisable.value = node;
+  isDisableDialogOpen.value = true;
+};
+
+const closeDisableDialog = () => {
+  isDisableDialogOpen.value = false;
+  nodeToDisable.value = null;
+};
+
+const openActivateDialog = (node: LocalNode) => {
+  nodeToActivate.value = node;
+  isActivateDialogOpen.value = true;
+};
+
+const closeActivateDialog = () => {
+  isActivateDialogOpen.value = false;
+  nodeToActivate.value = null;
 };
 
 const closeDialog = () => {
@@ -314,22 +309,12 @@ const closeDialog = () => {
 
 const resetForm = () => {
   form.name = '';
-  form.powerWh = '';
-  form.uptimeHours = 24;
-  form.uptimeMinutes = 0;
   form.error = '';
   form.submitting = false;
 };
 
 const handleDialogHide = () => {
   resetForm();
-  powerInfoDialog.value = false;
-};
-
-const timeToSeconds = (hoursInput: number, minutesInput: number) => {
-  const hours = Math.min(Math.max(Number(hoursInput) || 0, 0), 24);
-  const minutes = Math.min(Math.max(Number(minutesInput) || 0, 0), 59);
-  return hours * 3600 + minutes * 60;
 };
 
 const submitNode = async () => {
@@ -338,17 +323,11 @@ const submitNode = async () => {
     form.error = t('nodesPage.dialog.errors.name');
     return;
   }
-  if (form.powerWh === '' || Number.isNaN(Number(form.powerWh))) {
-    form.error = t('nodesPage.dialog.errors.power');
-    return;
-  }
 
   form.submitting = true;
   try {
     const payload = {
       name: form.name.trim(),
-      Wh: Number(form.powerWh),
-      dailyUptimeSeconds: timeToSeconds(form.uptimeHours, form.uptimeMinutes),
     };
     await api.post('/server-nodes', payload);
     isDialogOpen.value = false;
@@ -357,6 +336,58 @@ const submitNode = async () => {
     form.error = t('nodesPage.dialog.errors.generic');
   } finally {
     form.submitting = false;
+  }
+};
+
+const confirmDisableNode = async () => {
+  if (!nodeToDisable.value) {
+    return;
+  }
+
+  disableSubmitting.value = true;
+  try {
+    await api.delete(`/server-nodes/${nodeToDisable.value.id}`);
+    $q.notify({
+      type: 'positive',
+      position: 'top-right',
+      message: t('nodesPage.notifications.disableSuccess'),
+    });
+    closeDisableDialog();
+  } catch {
+    $q.notify({
+      type: 'negative',
+      position: 'top-right',
+      message: t('nodesPage.notifications.disableError'),
+    });
+  } finally {
+    disableSubmitting.value = false;
+    await fetchNodes();
+  }
+};
+
+const confirmActivateNode = async () => {
+  if (!nodeToActivate.value) {
+    return;
+  }
+
+  activateSubmitting.value = true;
+  try {
+    await api.post(`/server-nodes/${nodeToActivate.value.id}/activate`);
+    $q.notify({
+      type: 'positive',
+      position: 'top-right',
+      message: t('nodesPage.notifications.activateSuccess'),
+    });
+    closeActivateDialog();
+  } catch {
+    $q.notify({
+      type: 'negative',
+      position: 'top-right',
+      message: t('nodesPage.notifications.disableError'),
+    });
+  } finally {
+    activateSubmitting.value = false;
+    await fetchNodes();
   }
 };
 
@@ -381,13 +412,7 @@ onBeforeUnmount(() => {
 
 .nodes-add-button:hover,
 .nodes-add-button:focus-visible {
-  animation: nodes-server-shake 0.75s ease;
   box-shadow: 0 14px 26px rgba(5, 10, 24, 0.35);
-}
-
-:global(body.body--light) .nodes-add-button:hover,
-:global(body.body--light) .nodes-add-button:focus-visible {
-  box-shadow: 0 14px 22px rgba(15, 23, 43, 0.2);
 }
 
 
@@ -403,34 +428,31 @@ onBeforeUnmount(() => {
   transition: color 0.2s ease;
 }
 
-:global(body.body--light) .nodes-title {
-  color: #8b5a2b;
-}
-
-:global(body.body--light) .nodes-subtitle {
-  color: #0f172a;
-}
-
-:global(body.body--light) .nodes-header .q-btn {
-  color: #ffffff;
-}
-
 .nodes-subtitle {
   color: rgba(255, 255, 255, 0.7);
-}
-
-:global(body.body--light) .nodes-subtitle {
-  color: #4c566a;
 }
 
 .nodes-loading {
   min-height: 280px;
 }
 
+.nodes-section__title {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+
 .nodes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 32px;
+}
+
+.nodes-section {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(22, 32, 64, 0.6), rgba(12, 18, 34, 0.65));
 }
 
 .nodes-card {
@@ -444,21 +466,21 @@ onBeforeUnmount(() => {
   width: 160px;
   height: 160px;
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: radial-gradient(circle at top, rgba(18, 34, 58, 0.9), rgba(9, 17, 30, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(145deg, rgba(31, 45, 97, 0.9), rgba(13, 22, 48, 0.92));
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45), 0 0 12px rgba(79, 133, 255, 0.15);
 }
 
-:global(body.body--light) .nodes-card__body {
-  border-color: rgba(15, 23, 43, 0.1);
-  background: radial-gradient(circle at top, #f2f0ff, #dcd7ff);
-  box-shadow: 0 20px 30px rgba(15, 23, 42, 0.15);
+.nodes-card--disabled .nodes-card__body {
+  background: linear-gradient(145deg, rgba(30, 32, 40, 0.9), rgba(12, 14, 22, 0.92));
+  border-color: rgba(255, 255, 255, 0.1);
+  opacity: 0.92;
 }
 
 .nodes-eyes {
@@ -503,13 +525,22 @@ onBeforeUnmount(() => {
   transform: translateY(6px) scaleX(0.7) scaleY(0.2);
 }
 
-.nodes-eyes--happy .nodes-eye::after {
+.nodes-eyes--open .nodes-eye::after {
   opacity: 0;
 }
 
-.nodes-eyes--happy .nodes-eye__pupil {
+.nodes-eyes--open .nodes-eye__pupil {
   opacity: 1;
   transform: none;
+}
+
+.nodes-eyes--closed .nodes-eye::after {
+  opacity: 1;
+}
+
+.nodes-eyes--closed .nodes-eye__pupil {
+  opacity: 0;
+  transform: translateY(6px) scaleX(0.7) scaleY(0.2);
 }
 
 .nodes-card__logo {
@@ -519,6 +550,62 @@ onBeforeUnmount(() => {
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45));
 }
 
+.nodes-card__content {
+  position: relative;
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nodes-card__name {
+  text-align: center;
+  font-weight: 600;
+  padding: 0 8px;
+  transition: opacity 0.2s ease;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.nodes-card__actions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  width: 100%;
+}
+
+.nodes-card__actions--dual {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nodes-card__actions--single {
+  max-width: 140px;
+}
+
+.nodes-card__body:hover .nodes-card__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nodes-card__body:focus-within .nodes-card__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nodes-card__body:hover .nodes-card__name {
+  opacity: 0;
+}
+
+.nodes-card__body:focus-within .nodes-card__name {
+  opacity: 0;
+}
+
 .nodes-card__label {
   margin: 0;
   font-weight: 600;
@@ -526,12 +613,120 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.9);
 }
 
-:global(body.body--light) .nodes-card__label {
-  color: #1c2340;
+.nodes-accordion {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+
+}
+
+.nodes-accordion :global(.q-expansion-item__container) {
+  background: transparent;
+}
+
+.nodes-accordion :global(.q-item) {
+  padding: 14px 18px;
+}
+
+.nodes-accordion :global(.q-item__label) {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+:global(.body--light) {
+
+  .nodes-add-button:hover,
+  .nodes-add-button:focus-visible {
+    box-shadow: 0 14px 22px rgba(15, 23, 43, 0.2);
+  }
+
+  .nodes-title {
+    color: #8b5a2b;
+  }
+
+  .nodes-subtitle {
+    color: #4c566a;
+  }
+
+  .nodes-header .q-btn {
+    color: #ffffff;
+  }
+
+  .nodes-section {
+    border-color: rgba(15, 23, 43, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 255, 0.92));
+  }
+
+  .nodes-card__body {
+    border-color: rgba(15, 23, 43, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 26px rgba(15, 23, 42, 0.14);
+    color: #0f172a;
+  }
+
+  .nodes-card--disabled .nodes-card__body {
+    background: linear-gradient(145deg, #f4f7ff, #dfe6f5);
+    border-color: rgba(15, 23, 43, 0.12);
+    opacity: 0.96;
+  }
+
+  .nodes-card__label,
+  .nodes-card__name {
+    color: #0f172a;
+  }
+
+  :deep(.nodes-accordion) {
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  }
+
+  .nodes-empty__popup {
+    background: rgba(255, 255, 255, 0.94);
+    color: #1a1f33;
+    box-shadow:
+      0 18px 36px rgba(20, 27, 43, 0.18),
+      0 6px 12px rgba(15, 19, 33, 0.15);
+    border-color: rgba(41, 55, 97, 0.2);
+  }
+
+  .nodes-empty__popup::after {
+    border-top-color: rgba(255, 255, 255, 0.94);
+  }
+
+  .nodes-empty__server {
+    border-color: rgba(41, 55, 99, 0.2);
+    background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.98), #dfe8ff);
+    color: #1b2448;
+    box-shadow: 0 20px 30px rgba(15, 23, 42, 0.15);
+  }
+
+  .nodes-empty__server:hover,
+  .nodes-empty__server:focus-visible {
+    box-shadow: 0 26px 34px rgba(19, 30, 72, 0.25);
+  }
+
+  .server-eye {
+    background: rgba(243, 247, 255, 0.98);
+    border-color: rgba(15, 23, 42, 0.35);
+  }
+
+  .server-eye__pupil {
+    background: #0f172a;
+  }
+
+  .nodes-empty__title {
+    color: #8b5a2b;
+  }
+
+  .nodes-empty__hint {
+    color: #5b5e6b;
+  }
+}
+
+.nodes-empty--compact {
+  min-height: 120px;
 }
 
 .nodes-empty {
-  min-height: 320px;
   text-align: center;
 }
 
@@ -574,19 +769,6 @@ onBeforeUnmount(() => {
   border-color: rgba(18, 27, 49, 0.92) transparent transparent transparent;
 }
 
-:global(body.body--light) .nodes-empty__popup {
-  background: rgba(255, 255, 255, 0.94);
-  color: #1a1f33;
-  box-shadow:
-    0 18px 36px rgba(20, 27, 43, 0.18),
-    0 6px 12px rgba(15, 19, 33, 0.15);
-  border-color: rgba(41, 55, 97, 0.2);
-}
-
-:global(body.body--light) .nodes-empty__popup::after {
-  border-top-color: rgba(255, 255, 255, 0.94);
-}
-
 .nodes-empty__shadow {
   position: absolute;
   bottom: -26px;
@@ -616,22 +798,10 @@ onBeforeUnmount(() => {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-:global(body.body--light) .nodes-empty__server {
-  border-color: rgba(41, 55, 99, 0.2);
-  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.98), #dfe8ff);
-  color: #1b2448;
-  box-shadow: 0 20px 30px rgba(15, 23, 42, 0.15);
-}
-
 .nodes-empty__server:hover,
 .nodes-empty__server:focus-visible {
   animation: nodes-server-shake 0.75s ease;
   box-shadow: 0 28px 40px rgba(0, 0, 0, 0.5);
-}
-
-:global(body.body--light) .nodes-empty__server:hover,
-:global(body.body--light) .nodes-empty__server:focus-visible {
-  box-shadow: 0 26px 34px rgba(19, 30, 72, 0.25);
 }
 
 .nodes-empty__server-icon {
@@ -674,11 +844,6 @@ onBeforeUnmount(() => {
   transition: opacity 0.2s ease;
 }
 
-:global(body.body--light) .server-eye {
-  background: rgba(243, 247, 255, 0.98);
-  border-color: rgba(15, 23, 42, 0.35);
-}
-
 .server-eye__pupil {
   width: 8px;
   height: 8px;
@@ -687,10 +852,6 @@ onBeforeUnmount(() => {
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
   transform: translateY(4px) scaleX(0.8) scaleY(0.2);
-}
-
-:global(body.body--light) .server-eye__pupil {
-  background: #0f172a;
 }
 
 .server-node__eyes--happy .server-eye::after {
@@ -708,18 +869,12 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.85);
 }
 
-:global(body.body--light) .nodes-empty__title {
-  color: #8b5a2b;
-}
-
 .nodes-empty__hint {
   margin: 0;
   color: rgba(255, 255, 255, 0.6);
 }
 
-:global(body.body--light) .nodes-empty__hint {
-  color: #5b5e6b;
-}
+
 
 .nodes-dialog {
   width: 420px;

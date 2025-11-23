@@ -57,9 +57,14 @@ body.body--light {
   transition: background 0.35s ease, color 0.2s ease;
 }
 
+body.body--light .nodes-card__label {
+  background: linear-gradient(180deg, #fdfdff 0%, #f4f7ff 40%, #eff5ff 100%);
+  color: #1f2a44 !important;
+}
+
 body.body--light .nodes-page {
   background: linear-gradient(180deg, #fdfdff 0%, #f4f7ff 40%, #eff5ff 100%);
-  color: #1f2a44;
+  color: #1f2a44 !important;
 }
 
 body.body--light .nodes-subtitle {
@@ -70,3 +75,4 @@ body.body--light .nodes-empty__title,
 body.body--light .nodes-empty__hint {
   color: #0f172a;
 }
+

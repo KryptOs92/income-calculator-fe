@@ -4,8 +4,24 @@ export default {
     subtitle: "Gestisci i server di mining o staking che hai configurato.",
     actions: {
       add: "Aggiungi nodo",
+      details: "Dettagli",
+      disable: "Disattiva",
+      activate: "Riattiva",
+    },
+    sections: {
+      active: "Nodi attivi",
+      disabled: "Nodi disattivati",
+      count: "{count} nodi",
     },
     error: "Errore durante il caricamento.. riprovare piu tardi",
+    emptyActive: {
+      label: "Nessun nodo attivo",
+      hint: "Aggiungi un nodo per iniziare a monitorarlo.",
+    },
+    emptyDisabled: {
+      label: "Nessun nodo disattivato",
+      hint: "Non c'è nulla da riattivare al momento.",
+    },
     empty: {
       popup: "Non hai nessun nodo salvato",
       label: "Non hai ancora aggiunto nessun nodo :(",
@@ -37,6 +53,27 @@ export default {
         power: "Inserisci un consumo numerico.",
         generic: "Impossibile creare il nodo. Riprova.",
       },
+    },
+    disableDialog: {
+      title: "Disattiva nodo",
+      message: "Sei sicuro di disattivare il nodo?",
+      actions: {
+        cancel: "Annulla",
+        confirm: "Sì, disattiva",
+      },
+    },
+    activateDialog: {
+      title: "Riattiva nodo",
+      message: "Sei sicuro di voler riattivare il nodo?",
+      actions: {
+        cancel: "Annulla",
+        confirm: "Sì, riattiva",
+      },
+    },
+    notifications: {
+      disableSuccess: "Nodo disattivato con successo!",
+      activateSuccess: "Nodo riattivato con successo!",
+      disableError: "Impossibile disattivare il nodo, riprovare più tardi",
     },
   },
 };
