@@ -67,7 +67,7 @@
           <q-input v-model="form.name" :label="t('nodesPage.dialog.fields.name')" outlined dense
             :disable="form.submitting" />
           <q-input
-            v-model="form.powerKw"
+            v-model="form.powerWh"
             type="number"
             step="0.001"
             min="0"
@@ -178,7 +178,7 @@ const isNodeHappy = ref(false);
 const powerInfoDialog = ref(false);
 const form = reactive({
   name: '',
-  powerKw: '',
+  powerWh: '',
   uptimeHours: 24,
   uptimeMinutes: 0,
   submitting: false,
@@ -314,7 +314,7 @@ const closeDialog = () => {
 
 const resetForm = () => {
   form.name = '';
-  form.powerKw = '';
+  form.powerWh = '';
   form.uptimeHours = 24;
   form.uptimeMinutes = 0;
   form.error = '';
@@ -338,7 +338,7 @@ const submitNode = async () => {
     form.error = t('nodesPage.dialog.errors.name');
     return;
   }
-  if (form.powerKw === '' || Number.isNaN(Number(form.powerKw))) {
+  if (form.powerWh === '' || Number.isNaN(Number(form.powerWh))) {
     form.error = t('nodesPage.dialog.errors.power');
     return;
   }
@@ -347,7 +347,7 @@ const submitNode = async () => {
   try {
     const payload = {
       name: form.name.trim(),
-      powerKw: Number(form.powerKw),
+      Wh: Number(form.powerWh),
       dailyUptimeSeconds: timeToSeconds(form.uptimeHours, form.uptimeMinutes),
     };
     await api.post('/server-nodes', payload);

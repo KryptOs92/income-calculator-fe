@@ -25,7 +25,7 @@ export default {
       powerInfo: {
         title: "Che cosa significa?",
         description:
-          "È il consumo medio orario in kWatt. Se ad esempio il tuo server consuma 35-50W/h scegli un numero che rappresenti la media o il massimo se preferisci il worst case.",
+          "È il consumo medio orario in Watt. Se ad esempio il tuo server consuma 35-50W/h scegli un numero che rappresenti la media o il massimo se preferisci il worst case.",
         close: "Chiudi",
       },
       actions: {
