@@ -7,6 +7,7 @@ import verifyPage from 'src/pages/VerifyPage/i18n/it';
 import resetPasswordPage from 'src/pages/ResetPasswordPage/i18n/it';
 import walletsPage from 'src/pages/WalletsPage/i18n/it';
 import nodesPage from 'src/pages/NodesPage/i18n/it';
+import nodeDetail from 'src/pages/NodeDetail/i18n/it';
 
 export default {
   failed: 'Azione fallita',
@@ -20,4 +21,5 @@ export default {
   ...resetPasswordPage,
   ...walletsPage,
   ...nodesPage,
+  ...nodeDetail,
 };

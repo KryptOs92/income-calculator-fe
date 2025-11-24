@@ -76,3 +76,15 @@ body.body--light .nodes-empty__hint {
   color: #0f172a;
 }
 
+.node-detail {
+  min-height: 100%;
+  background: radial-gradient(circle at 50% 20%, #060c1c, #0a1228 45%, #050914 85%);
+  color: #f6fbff;
+  transition: background 0.35s ease, color 0.2s ease;
+}
+
+body.body--light .node-detail {
+  background: linear-gradient(180deg, #fdfdff 0%, #f4f7ff 40%, #eff5ff 100%);
+  color: #1f2a44 !important;
+}
+
