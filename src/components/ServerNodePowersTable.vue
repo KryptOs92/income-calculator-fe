@@ -1,8 +1,11 @@
 <template>
   <q-card class="server-node-powers q-pa-md">
     <div class="row items-center justify-between q-mb-md">
-      <div>
-        <div class="text-subtitle1">{{ t('nodeDetail.powers.title') }}</div>
+      <div class="column">
+        <div class="row items-center q-gutter-xs">
+          <q-icon name="bolt" size="24px" color="amber-3" />
+          <div class="text-subtitle1">{{ t('nodeDetail.powers.title') }}</div>
+        </div>
         <div class="text-caption text-grey-6">
           {{ t('nodeDetail.powers.subtitle') }}
         </div>
