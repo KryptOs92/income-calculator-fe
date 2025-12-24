@@ -14,18 +14,9 @@
     <q-card class="node-detail__card q-pa-md q-mb-xl">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-6">
-          <q-input
-            v-model="nodeName"
-            outlined
-            dense
-            :label="t('nodeDetail.form.nameLabel')"
-            :hint="t('nodeDetail.form.nameHint')"
-            :error="Boolean(nameError)"
-            :error-message="nameError"
-            :loading="isSavingName"
-            :disable="isLoading"
-            data-testid="node-name-input"
-          />
+          <q-input v-model="nodeName" outlined dense :label="t('nodeDetail.form.nameLabel')"
+            :hint="t('nodeDetail.form.nameHint')" :error="Boolean(nameError)" :error-message="nameError"
+            :loading="isSavingName" :disable="isLoading" data-testid="node-name-input" />
         </div>
       </div>
     </q-card>
@@ -173,13 +164,13 @@ onBeforeUnmount(() => {
 .node-detail__card {
   border-radius: 18px;
   border: 1px solid rgba(111, 63, 245, 0.18);
-  background: linear-gradient(180deg, rgba(22, 32, 64, 0.6), rgba(12, 18, 34, 0.65));
-  color: #f6fbff;
+  background-color: white;
+  color: black;
 }
 
 :global(body.body--light) .node-detail__card {
   border-color: rgba(111, 63, 245, 0.28);
-  background: linear-gradient(180deg, #fdfdff 0%, #f4f7ff 40%, #eff5ff 100%);
-  color: #1f2a44;
+  background: #ffffff;
+  color: #000000;
 }
 </style>

@@ -386,27 +386,22 @@ watch(
 .server-node-powers {
   border-radius: 18px;
   border: 1px solid rgba(111, 63, 245, 0.18);
-  background: linear-gradient(180deg, rgba(22, 32, 64, 0.6), rgba(12, 18, 34, 0.65));
-  color: #f6fbff;
+ 
 }
 
 .server-node-powers :deep(.q-table__container) {
   background: transparent;
 }
 
-.server-node-powers :deep(th),
-.server-node-powers :deep(td) {
-  color: #f6fbff;
-}
 
-.server-node-powers :deep(.q-table__bottom) {
-  color: #f6fbff;
-}
 
 :global(body.body--light) .server-node-powers {
   border-color: rgba(111, 63, 245, 0.28);
-  background: linear-gradient(180deg, #fdfdff 0%, #f4f7ff 40%, #eff5ff 100%);
-  color: #1f2a44;
+  background: #ffffff;
+  color: #000000;
+  box-shadow:
+    0 0 0 1px rgba(111, 63, 245, 0.3),
+    0 0 18px rgba(111, 63, 245, 0.14);
 }
 
 :global(body.body--light) .server-node-powers :deep(th),
@@ -414,4 +409,5 @@ watch(
 :global(body.body--light) .server-node-powers :deep(.q-table__bottom) {
   color: inherit;
 }
+
 </style>
