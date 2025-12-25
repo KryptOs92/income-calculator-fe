@@ -22,6 +22,8 @@ export default {
         add: "Aggiungi consumo",
         edit: "Modifica consumo",
         delete: "Elimina consumo",
+        showChart: "Mostra grafico",
+        showTable: "Mostra tabella",
       },
       columns: {
         wh: "Watt/h",

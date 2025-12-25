@@ -10,11 +10,26 @@
           {{ t('nodeDetail.powers.subtitle') }}
         </div>
       </div>
-      <q-btn color="primary" unelevated icon="add" :label="t('nodeDetail.powers.actions.add')" @click="openModal" />
+      <div class="row q-gutter-sm">
+        <q-btn
+          outline
+          color="primary"
+          icon="show_chart"
+          :label="showChart ? t('nodeDetail.powers.actions.showTable') : t('nodeDetail.powers.actions.showChart')"
+          @click="toggleChart"
+        />
+        <q-btn
+          color="primary"
+          unelevated
+          icon="add"
+          :label="t('nodeDetail.powers.actions.add')"
+          @click="openModal"
+        />
+      </div>
     </div>
 
-    <q-table flat :rows="rows" :columns="columns" row-key="id" :loading="isLoading" :pagination="pagination"
-      hide-pagination :no-data-label="t('nodeDetail.powers.empty')">
+    <q-table v-if="!showChart" flat :rows="rows" :columns="columns" row-key="id" :loading="isLoading"
+      :pagination="pagination" hide-pagination :no-data-label="t('nodeDetail.powers.empty')">
       <template #body-cell-Wh="props">
         <q-td :props="props">
           {{ props.row.Wh }}
@@ -52,6 +67,11 @@
         </div>
       </template>
     </q-table>
+
+    <div v-else class="server-node-powers__chart-wrapper">
+      <ApexChart type="line" height="360" class="server-node-powers__chart" :options="chartOptions"
+        :series="chartSeries" />
+    </div>
 
     <q-dialog v-model="isModalOpen" persistent @hide="resetForm">
       <q-card class="server-node-powers__dialog q-pa-md"
@@ -171,6 +191,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
+import VueApexCharts from 'vue3-apexcharts';
 
 type ServerNodePower = {
   id?: string | number;
@@ -186,6 +207,7 @@ const props = defineProps<{
 
 const { t, locale } = useI18n();
 const $q = useQuasar();
+const ApexChart = VueApexCharts;
 
 const rows = ref<ServerNodePower[]>([]);
 const isLoading = ref(false);
@@ -197,6 +219,7 @@ const editingRow = ref<ServerNodePower | null>(null);
 const isDeleteModalOpen = ref(false);
 const isDeleting = ref(false);
 const deletingRow = ref<ServerNodePower | null>(null);
+const showChart = ref(false);
 const pagination = ref({
   page: 1,
   rowsPerPage: 10,
@@ -309,6 +332,10 @@ const closeModal = () => {
 
 const openModal = () => {
   isModalOpen.value = true;
+};
+
+const toggleChart = () => {
+  showChart.value = !showChart.value;
 };
 
 const closeEditModal = () => {
@@ -479,6 +506,91 @@ const formatInputDate = (value: string | null | undefined) => {
   return `${year}-${month}-${day}`;
 };
 
+const toTimestamp = (value: string | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  const time = date.getTime();
+  return Number.isNaN(time) ? null : time;
+};
+
+const chartData = computed(() => {
+  const now = Date.now();
+  const points: { x: number; y: number }[] = [];
+
+  rows.value.forEach((row) => {
+    const wh = Number(row.Wh);
+    if (!Number.isFinite(wh)) {
+      return;
+    }
+
+    const start = toTimestamp(row.effectiveFrom) ?? toTimestamp(row.effectiveTo) ?? now;
+    const end = toTimestamp(row.effectiveTo) ?? start;
+
+    points.push({ x: start, y: wh });
+    if (end !== start) {
+      points.push({ x: end, y: wh });
+    }
+  });
+
+  return points.sort((a, b) => a.x - b.x);
+});
+
+const chartSeries = computed(() => [
+  {
+    name: t('nodeDetail.powers.title'),
+    data: chartData.value,
+  },
+]);
+
+const chartOptions = computed(() => {
+  const isDark = $q.dark.isActive;
+  const foreColor = isDark ? '#f6fbff' : '#1f2a44';
+  const gridColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  return {
+    chart: {
+      background: 'transparent',
+      foreColor,
+      toolbar: { show: false },
+    },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    colors: ['#6f3ff5'],
+    stroke: {
+      curve: 'smooth',
+      width: 3,
+    },
+    markers: {
+      size: 4,
+      colors: ['#ffffff'],
+      strokeColors: '#6f3ff5',
+      strokeWidth: 2,
+    },
+    dataLabels: { enabled: false },
+    grid: { borderColor: gridColor },
+    xaxis: {
+      type: 'datetime',
+      labels: {
+        style: { colors: foreColor },
+      },
+      tooltip: { enabled: false },
+    },
+    yaxis: {
+      title: {
+        text: 'Watt',
+        style: { color: foreColor },
+      },
+      labels: {
+        style: { colors: foreColor },
+      },
+    },
+    tooltip: {
+      theme: isDark ? 'dark' : 'light',
+      x: { format: 'yyyy-MM-dd' },
+    },
+  };
+});
+
 const resetEditForm = () => {
   editForm.wh = undefined;
   editForm.effectiveFrom = null;
@@ -576,6 +688,14 @@ body.body--light .server-node-powers__dialog :deep(.q-field__control) {
 .server-node-powers :deep(.q-table__container),
 .server-node-powers :deep(.q-table) {
   background: transparent;
+}
+
+.server-node-powers__chart-wrapper {
+  min-height: 360px;
+}
+
+.server-node-powers__chart {
+  width: 100%;
 }
 
 .server-node-powers :deep(th),

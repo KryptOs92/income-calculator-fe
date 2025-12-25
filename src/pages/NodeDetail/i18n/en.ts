@@ -22,6 +22,8 @@ export default {
         add: "Add node power",
         edit: "Edit node power",
         delete: "Delete node power",
+        showChart: "Show chart",
+        showTable: "Show table",
       },
       columns: {
         wh: "Watt/h",
