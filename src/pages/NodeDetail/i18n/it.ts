@@ -20,11 +20,14 @@ export default {
       subtitle: "Gestisci i consumi in watt del nodo.",
       actions: {
         add: "Aggiungi consumo",
+        edit: "Modifica consumo",
+        delete: "Elimina consumo",
       },
       columns: {
         wh: "Watt/h",
         validFrom: "Valido da",
         validTo: "Valido a",
+        actions: "Azioni",
       },
       empty: "Non hai ancora inserito il consumo del nodo",
       now: "ora",
@@ -43,10 +46,37 @@ export default {
           wh: "Inserisci un valore numerico in Watt.",
         },
       },
+      editModal: {
+        title: "Modifica consumo",
+        fields: {
+          wh: "Watt",
+          effectiveFrom: "Valido da (opzionale)",
+          effectiveTo: "Valido a (opzionale)",
+        },
+        actions: {
+          cancel: "Annulla",
+          confirm: "Aggiorna",
+        },
+        errors: {
+          wh: "Inserisci un valore numerico in Watt.",
+        },
+      },
+      deleteModal: {
+        title: "Elimina consumo",
+        message: "Sei sicuro di voler eliminare questo consumo?",
+        actions: {
+          cancel: "Annulla",
+          confirm: "Elimina",
+        },
+      },
       notifications: {
         loadError: "Impossibile caricare i consumi del nodo.",
         createSuccess: "Consumo salvato con successo.",
         createError: "Errore durante il salvataggio del consumo.",
+        updateSuccess: "Consumo aggiornato con successo.",
+        updateError: "Errore durante l'aggiornamento del consumo.",
+        deleteSuccess: "Consumo eliminato con successo.",
+        deleteError: "Errore durante l'eliminazione del consumo.",
       },
     },
   },

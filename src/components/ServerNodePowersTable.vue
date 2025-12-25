@@ -10,25 +10,11 @@
           {{ t('nodeDetail.powers.subtitle') }}
         </div>
       </div>
-      <q-btn
-        color="primary"
-        unelevated
-        icon="add"
-        :label="t('nodeDetail.powers.actions.add')"
-        @click="openModal"
-      />
+      <q-btn color="primary" unelevated icon="add" :label="t('nodeDetail.powers.actions.add')" @click="openModal" />
     </div>
 
-    <q-table
-      flat
-      :rows="rows"
-      :columns="columns"
-      row-key="id"
-      :loading="isLoading"
-      :pagination="pagination"
-      hide-pagination
-      :no-data-label="t('nodeDetail.powers.empty')"
-    >
+    <q-table flat :rows="rows" :columns="columns" row-key="id" :loading="isLoading" :pagination="pagination"
+      hide-pagination :no-data-label="t('nodeDetail.powers.empty')">
       <template #body-cell-Wh="props">
         <q-td :props="props">
           {{ props.row.Wh }}
@@ -47,6 +33,15 @@
         </q-td>
       </template>
 
+      <template #body-cell-actions="props">
+        <q-td :props="props" class="text-right">
+          <q-btn dense flat round icon="edit" :aria-label="t('nodeDetail.powers.actions.edit')"
+            @click="openEditModal(props.row)" />
+          <q-btn dense flat round color="negative" icon="delete" :aria-label="t('nodeDetail.powers.actions.delete')"
+            @click="openDeleteModal(props.row)" />
+        </q-td>
+      </template>
+
       <template #loading>
         <q-inner-loading showing color="primary" />
       </template>
@@ -59,43 +54,22 @@
     </q-table>
 
     <q-dialog v-model="isModalOpen" persistent @hide="resetForm">
-      <q-card class="server-node-powers__dialog q-pa-md">
+      <q-card class="server-node-powers__dialog q-pa-md"
+        :class="{ 'server-node-powers__dialog--light': !$q.dark.isActive }">
         <div class="text-h6 q-mb-sm">{{ t('nodeDetail.powers.modal.title') }}</div>
         <q-form class="column q-gutter-md" @submit.prevent="submitForm">
-          <q-input
-            v-model.number="form.wh"
-            type="number"
-            outlined
-            dense
-            :label="t('nodeDetail.powers.modal.fields.wh')"
-            :error="Boolean(formErrors.wh)"
-            :error-message="formErrors.wh"
-            :disable="isSubmitting"
-            min="0"
-          />
+          <q-input v-model.number="form.wh" type="number" outlined dense :label="t('nodeDetail.powers.modal.fields.wh')"
+            :error="Boolean(formErrors.wh)" :error-message="formErrors.wh" :disable="isSubmitting" min="0" />
 
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
-              <q-input
-                v-model="form.effectiveFrom"
-                outlined
-                dense
-                readonly
-                clearable
-                :label="t('nodeDetail.powers.modal.fields.effectiveFrom')"
-                :disable="isSubmitting"
-                @clear="form.effectiveFrom = null"
-              >
+              <q-input v-model="form.effectiveFrom" outlined dense readonly clearable
+                :label="t('nodeDetail.powers.modal.fields.effectiveFrom')" :disable="isSubmitting"
+                @clear="form.effectiveFrom = null">
                 <template #append>
                   <q-icon name="event" class="cursor-pointer">
                     <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-date
-                        v-model="form.effectiveFrom"
-                        mask="YYYY-MM-DD"
-                        minimal
-                        clearable
-                        clear-icon="close"
-                      />
+                      <q-date v-model="form.effectiveFrom" mask="YYYY-MM-DD" minimal clearable clear-icon="close" />
                     </q-popup-proxy>
                   </q-icon>
                 </template>
@@ -103,26 +77,13 @@
             </div>
 
             <div class="col-12 col-md-6">
-              <q-input
-                v-model="form.effectiveTo"
-                outlined
-                dense
-                readonly
-                clearable
-                :label="t('nodeDetail.powers.modal.fields.effectiveTo')"
-                :disable="isSubmitting"
-                @clear="form.effectiveTo = null"
-              >
+              <q-input v-model="form.effectiveTo" outlined dense readonly clearable
+                :label="t('nodeDetail.powers.modal.fields.effectiveTo')" :disable="isSubmitting"
+                @clear="form.effectiveTo = null">
                 <template #append>
                   <q-icon name="event" class="cursor-pointer">
                     <q-popup-proxy transition-show="scale" transition-hide="scale">
-                      <q-date
-                        v-model="form.effectiveTo"
-                        mask="YYYY-MM-DD"
-                        minimal
-                        clearable
-                        clear-icon="close"
-                      />
+                      <q-date v-model="form.effectiveTo" mask="YYYY-MM-DD" minimal clearable clear-icon="close" />
                     </q-popup-proxy>
                   </q-icon>
                 </template>
@@ -131,21 +92,75 @@
           </div>
 
           <div class="row justify-end q-gutter-sm">
-            <q-btn
-              flat
-              :label="t('nodeDetail.powers.modal.actions.cancel')"
-              :disable="isSubmitting"
-              @click="closeModal"
-            />
-            <q-btn
-              color="primary"
-              unelevated
-              type="submit"
-              :label="t('nodeDetail.powers.modal.actions.confirm')"
-              :loading="isSubmitting"
-            />
+            <q-btn flat :label="t('nodeDetail.powers.modal.actions.cancel')" :disable="isSubmitting"
+              @click="closeModal" />
+            <q-btn color="primary" unelevated type="submit" :label="t('nodeDetail.powers.modal.actions.confirm')"
+              :loading="isSubmitting" />
           </div>
         </q-form>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="isEditModalOpen" persistent @hide="resetEditForm">
+      <q-card class="server-node-powers__dialog q-pa-md"
+        :class="{ 'server-node-powers__dialog--light': !$q.dark.isActive }">
+        <div class="text-h6 q-mb-sm">{{ t('nodeDetail.powers.editModal.title') }}</div>
+        <q-form class="column q-gutter-md" @submit.prevent="submitEditForm">
+          <q-input v-model.number="editForm.wh" type="number" outlined dense
+            :label="t('nodeDetail.powers.editModal.fields.wh')" :error="Boolean(editFormErrors.wh)"
+            :error-message="editFormErrors.wh" :disable="isEditSubmitting" min="0" />
+
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <q-input v-model="editForm.effectiveFrom" outlined dense readonly clearable
+                :label="t('nodeDetail.powers.editModal.fields.effectiveFrom')" :disable="isEditSubmitting"
+                @clear="editForm.effectiveFrom = null">
+                <template #append>
+                  <q-icon name="event" class="cursor-pointer">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-date v-model="editForm.effectiveFrom" mask="YYYY-MM-DD" minimal clearable clear-icon="close" />
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <q-input v-model="editForm.effectiveTo" outlined dense readonly clearable
+                :label="t('nodeDetail.powers.editModal.fields.effectiveTo')" :disable="isEditSubmitting"
+                @clear="editForm.effectiveTo = null">
+                <template #append>
+                  <q-icon name="event" class="cursor-pointer">
+                    <q-popup-proxy transition-show="scale" transition-hide="scale">
+                      <q-date v-model="editForm.effectiveTo" mask="YYYY-MM-DD" minimal clearable clear-icon="close" />
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+            </div>
+          </div>
+
+          <div class="row justify-end q-gutter-sm">
+            <q-btn flat :label="t('nodeDetail.powers.editModal.actions.cancel')" :disable="isEditSubmitting"
+              @click="closeEditModal" />
+            <q-btn color="primary" unelevated type="submit" :label="t('nodeDetail.powers.editModal.actions.confirm')"
+              :loading="isEditSubmitting" />
+          </div>
+        </q-form>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="isDeleteModalOpen" persistent @hide="resetDeleteState">
+      <q-card class="server-node-powers__dialog q-pa-md"
+        :class="{ 'server-node-powers__dialog--light': !$q.dark.isActive }">
+        <div class="text-h6 q-mb-md">{{ t('nodeDetail.powers.deleteModal.title') }}</div>
+        <div class="q-mb-lg">{{ t('nodeDetail.powers.deleteModal.message') }}</div>
+        <div class="row justify-end q-gutter-sm">
+          <q-btn flat :label="t('nodeDetail.powers.deleteModal.actions.cancel')" :disable="isDeleting"
+            @click="closeDeleteModal" />
+          <q-btn color="negative" unelevated :label="t('nodeDetail.powers.deleteModal.actions.confirm')"
+            :loading="isDeleting" @click="confirmDelete" />
+        </div>
       </q-card>
     </q-dialog>
   </q-card>
@@ -176,6 +191,12 @@ const rows = ref<ServerNodePower[]>([]);
 const isLoading = ref(false);
 const isModalOpen = ref(false);
 const isSubmitting = ref(false);
+const isEditModalOpen = ref(false);
+const isEditSubmitting = ref(false);
+const editingRow = ref<ServerNodePower | null>(null);
+const isDeleteModalOpen = ref(false);
+const isDeleting = ref(false);
+const deletingRow = ref<ServerNodePower | null>(null);
 const pagination = ref({
   page: 1,
   rowsPerPage: 10,
@@ -193,7 +214,17 @@ const form = reactive<FormState>({
   effectiveTo: null,
 });
 
+const editForm = reactive<FormState>({
+  wh: undefined,
+  effectiveFrom: null,
+  effectiveTo: null,
+});
+
 const formErrors = reactive({
+  wh: '',
+});
+
+const editFormErrors = reactive({
   wh: '',
 });
 
@@ -215,6 +246,12 @@ const columns = computed(() => [
     label: t('nodeDetail.powers.columns.validTo'),
     field: 'effectiveTo',
     align: 'left' as const,
+  },
+  {
+    name: 'actions',
+    label: t('nodeDetail.powers.columns.actions'),
+    field: 'actions',
+    align: 'right' as const,
   },
 ]);
 
@@ -274,6 +311,28 @@ const openModal = () => {
   isModalOpen.value = true;
 };
 
+const closeEditModal = () => {
+  isEditModalOpen.value = false;
+};
+
+const openEditModal = (row: ServerNodePower) => {
+  editFormErrors.wh = '';
+  editingRow.value = row;
+  editForm.wh = row.Wh;
+  editForm.effectiveFrom = formatInputDate(row.effectiveFrom);
+  editForm.effectiveTo = formatInputDate(row.effectiveTo);
+  isEditModalOpen.value = true;
+};
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false;
+};
+
+const openDeleteModal = (row: ServerNodePower) => {
+  deletingRow.value = row;
+  isDeleteModalOpen.value = true;
+};
+
 const submitForm = async () => {
   formErrors.wh = '';
   const whValue = Number(form.wh);
@@ -310,6 +369,82 @@ const submitForm = async () => {
   }
 };
 
+const submitEditForm = async () => {
+  editFormErrors.wh = '';
+  const whValue = Number(editForm.wh);
+  if (!Number.isFinite(whValue)) {
+    editFormErrors.wh = t('nodeDetail.powers.editModal.errors.wh');
+    return;
+  }
+
+  if (!editingRow.value?.id) {
+    $q.notify({
+      type: 'negative',
+      position: 'top-right',
+      message: t('nodeDetail.powers.notifications.updateError'),
+    });
+    return;
+  }
+
+  isEditSubmitting.value = true;
+  try {
+    const payload = {
+      Wh: whValue,
+      effectiveFrom: editForm.effectiveFrom || null,
+      effectiveTo: editForm.effectiveTo || null,
+    };
+    await api.put(`/server-node-powers/${editingRow.value.id}`, payload);
+    $q.notify({
+      type: 'positive',
+      position: 'top-right',
+      message: t('nodeDetail.powers.notifications.updateSuccess'),
+    });
+    isEditModalOpen.value = false;
+    resetEditForm();
+    await fetchPowers();
+  } catch {
+    $q.notify({
+      type: 'negative',
+      position: 'top-right',
+      message: t('nodeDetail.powers.notifications.updateError'),
+    });
+  } finally {
+    isEditSubmitting.value = false;
+  }
+};
+
+const confirmDelete = async () => {
+  if (!deletingRow.value?.id) {
+    $q.notify({
+      type: 'negative',
+      position: 'top-right',
+      message: t('nodeDetail.powers.notifications.deleteError'),
+    });
+    return;
+  }
+
+  isDeleting.value = true;
+  try {
+    await api.delete(`/server-node-powers/${deletingRow.value.id}`);
+    $q.notify({
+      type: 'positive',
+      position: 'top-right',
+      message: t('nodeDetail.powers.notifications.deleteSuccess'),
+    });
+    isDeleteModalOpen.value = false;
+    resetDeleteState();
+    await fetchPowers();
+  } catch {
+    $q.notify({
+      type: 'negative',
+      position: 'top-right',
+      message: t('nodeDetail.powers.notifications.deleteError'),
+    });
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
 const formatDate = (
   value: string | null | undefined,
   options?: { fallbackNow?: boolean }
@@ -330,6 +465,31 @@ const formatDate = (
   }).format(date);
 };
 
+const formatInputDate = (value: string | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const resetEditForm = () => {
+  editForm.wh = undefined;
+  editForm.effectiveFrom = null;
+  editForm.effectiveTo = null;
+  editFormErrors.wh = '';
+  editingRow.value = null;
+};
+
+const resetDeleteState = () => {
+  deletingRow.value = null;
+};
 watch(
   () => props.nodeId,
   () => {
@@ -365,37 +525,67 @@ watch(
   background-color: rgba(255, 255, 255, 0.04);
 }
 
-:global(body.body--light) .server-node-powers__dialog {
+body.body--light .server-node-powers__dialog {
   border-color: rgba(111, 63, 245, 0.28);
-  background: linear-gradient(180deg, #fdfdff 0%, #f4f7ff 40%, #eff5ff 100%);
-  color: #1f2a44;
+  background: #ffffff;
+  color: #000000;
 }
 
-:global(body.body--light) .server-node-powers__dialog :deep(.q-field__native),
-:global(body.body--light) .server-node-powers__dialog :deep(.q-field__prefix),
-:global(body.body--light) .server-node-powers__dialog :deep(.q-field__suffix),
-:global(body.body--light) .server-node-powers__dialog :deep(.q-field__label),
-:global(body.body--light) .server-node-powers__dialog :deep(.q-field__marginal) {
-  color: inherit;
+body.body--light .server-node-powers__dialog :deep(.q-field__native),
+body.body--light .server-node-powers__dialog :deep(.q-field__prefix),
+body.body--light .server-node-powers__dialog :deep(.q-field__suffix),
+body.body--light .server-node-powers__dialog :deep(.q-field__label),
+body.body--light .server-node-powers__dialog :deep(.q-field__marginal) {
+  color: #000000;
 }
 
-:global(body.body--light) .server-node-powers__dialog :deep(.q-field__control) {
-  background-color: white;
+body.body--light .server-node-powers__dialog :deep(.q-field__control) {
+  background-color: #ffffff;
+}
+
+.server-node-powers__dialog--light {
+  border-color: rgba(111, 63, 245, 0.28);
+  background: #ffffff;
+  color: #000000;
+}
+
+.server-node-powers__dialog--light :deep(.q-field__native),
+.server-node-powers__dialog--light :deep(.q-field__prefix),
+.server-node-powers__dialog--light :deep(.q-field__suffix),
+.server-node-powers__dialog--light :deep(.q-field__label),
+.server-node-powers__dialog--light :deep(.q-field__marginal) {
+  color: #000000;
+}
+
+.server-node-powers__dialog--light :deep(.q-field__control) {
+  background-color: #ffffff;
 }
 
 .server-node-powers {
   border-radius: 18px;
-  border: 1px solid rgba(111, 63, 245, 0.18);
- 
+  border: 1px solid rgba(111, 63, 245, 0.28);
+  background: linear-gradient(180deg, rgba(22, 32, 64, 0.9), rgba(12, 18, 34, 0.95));
+  color: #f6fbff;
+  box-shadow:
+    0 0 0 1px rgba(111, 63, 245, 0.25),
+    0 0 18px rgba(72, 149, 255, 0.2);
 }
 
-.server-node-powers :deep(.q-table__container) {
+
+
+.server-node-powers :deep(.q-table__container),
+.server-node-powers :deep(.q-table) {
   background: transparent;
 }
 
+.server-node-powers :deep(th),
+.server-node-powers :deep(td),
+.server-node-powers :deep(.q-table__bottom) {
+  color: #f6fbff;
+  background-color: transparent;
+}
 
-
-:global(body.body--light) .server-node-powers {
+body.body--light .server-node-powers {
   border-color: rgba(111, 63, 245, 0.28);
   background: #ffffff;
   color: #000000;
@@ -404,10 +594,9 @@ watch(
     0 0 18px rgba(111, 63, 245, 0.14);
 }
 
-:global(body.body--light) .server-node-powers :deep(th),
-:global(body.body--light) .server-node-powers :deep(td),
-:global(body.body--light) .server-node-powers :deep(.q-table__bottom) {
+body.body--light .server-node-powers :deep(th),
+body.body--light .server-node-powers :deep(td),
+body.body--light .server-node-powers :deep(.q-table__bottom) {
   color: inherit;
 }
-
 </style>

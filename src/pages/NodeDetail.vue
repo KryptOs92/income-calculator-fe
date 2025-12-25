@@ -163,12 +163,15 @@ onBeforeUnmount(() => {
 
 .node-detail__card {
   border-radius: 18px;
-  border: 1px solid rgba(111, 63, 245, 0.18);
-  background-color: white;
-  color: black;
+  border: 1px solid rgba(111, 63, 245, 0.28);
+  background: linear-gradient(180deg, rgba(22, 32, 64, 0.9), rgba(12, 18, 34, 0.95));
+  color: #f6fbff;
+  box-shadow:
+    0 0 0 1px rgba(111, 63, 245, 0.25),
+    0 0 18px rgba(72, 149, 255, 0.2);
 }
 
-:global(body.body--light) .node-detail__card {
+body.body--light .node-detail__card {
   border-color: rgba(111, 63, 245, 0.28);
   background: #ffffff;
   color: #000000;
